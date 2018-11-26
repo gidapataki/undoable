@@ -59,6 +59,10 @@ public:
 		, name(this, name)
 	{}
 
+	void Dump() {
+		std::cout << name.Get() << std::endl;
+	}
+
 	undoable::ValueProperty<int> x;
 	undoable::ValueProperty<int> y;
 	undoable::ValueProperty<std::string> name;
@@ -68,17 +72,23 @@ public:
 int main() {
 	undoable::History h;
 	Shape s(&h, "initial");
-	std::cout << s.name.Get() << std::endl;
+	s.Dump();	// initial
 
-	s.name.Set("changed");
+	s.name.Set("changed-1");
 	h.Commit();
-	std::cout << s.name.Get() << std::endl;
+	s.Dump();	// changed-1
 
 	h.Undo();
-	std::cout << s.name.Get() << std::endl;
+	s.Dump();	// initial
+
+	s.name.Set("changed-2");
+	s.Dump();	// changed-2
+
+	h.Unstage();
+	s.Dump();	// initial
 
 	h.Redo();
-	std::cout << s.name.Get() << std::endl;
+	s.Dump();	// changed-1
 
 	return 0;
 }
