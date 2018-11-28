@@ -1,18 +1,10 @@
 #pragma once
 #include <list>
 #include "undoable/UniquePtr.h"
+#include "undoable/Command.h"
 
 
 namespace undoable {
-
-class Command {
-public:
-	virtual ~Command() = default;
-
-	// Apply() should toggle between two states.
-	virtual void Apply() = 0;
-};
-
 
 class Transaction {
 public:

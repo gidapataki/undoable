@@ -7,7 +7,9 @@
 namespace undoable {
 
 
-class Tracked : public IPropertyOwner {
+class Tracked
+	: public PropertyOwner
+{
 public:
 	Tracked(History* history)
 		: history_(history)
