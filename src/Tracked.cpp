@@ -28,7 +28,7 @@ void Tracked::ApplyPropertyChange(UniquePtr<Command> command) {
 				"Cannot change property on a destroyed object");
 		}
 	} else {
-		command->Apply();
+		command->Apply(false);
 	}
 }
 
@@ -76,8 +76,8 @@ Tracked::StatusChange::~StatusChange() {
 	}
 }
 
-void Tracked::StatusChange::Apply() {
-	if (create_) {
+void Tracked::StatusChange::Apply(bool reverse) {
+	if (create_ ^ reverse) {
 		obj_->status_ = Status::kOnCreate;
 		obj_->OnCreate();
 		obj_->status_ = Status::kCreated;
@@ -86,8 +86,6 @@ void Tracked::StatusChange::Apply() {
 		obj_->OnDestroy();
 		obj_->status_ = Status::kDestroyed;
 	}
-
-	create_ = !create_;
 }
 
 } // namespace undoable

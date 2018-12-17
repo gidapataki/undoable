@@ -49,7 +49,7 @@ private:
 	class Change : public Command {
 	public:
 		Change(ValueProperty* property, T value);
-		virtual void Apply() override;
+		virtual void Apply(bool reverse) override;
 
 	private:
 		ValueProperty* property_;

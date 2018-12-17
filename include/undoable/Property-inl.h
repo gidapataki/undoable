@@ -31,7 +31,7 @@ ValueProperty<T>::Change::Change(ValueProperty* property, T value)
 {}
 
 template<typename T>
-void ValueProperty<T>::Change::Apply() {
+void ValueProperty<T>::Change::Apply(bool reverse) {
 	std::swap(property_->value_, value_);
 	property_->owner_->OnPropertyChange(property_);
 }

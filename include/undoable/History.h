@@ -16,13 +16,14 @@ public:
 	Transaction& operator=(Transaction&&) = default;
 
 	bool IsEmpty() const;
-	void ReverseApply();
-	void Clear();
 	void Apply(UniquePtr<Command> command);
+	void Reverse();
+	void Clear();
 
 private:
-	// Commands are stored in the order they were applied.
+	// Note: Commands are stored in the order they were applied.
 	std::list<UniquePtr<Command>> commands_;
+	bool reverse_ = false;
 };
 
 

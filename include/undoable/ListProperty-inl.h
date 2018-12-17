@@ -85,7 +85,7 @@ ListNode<Type, Tag>::Relink::Relink(
 {}
 
 template<typename Type, typename Tag>
-void ListNode<Type, Tag>::Relink::Apply() {
+void ListNode<Type, Tag>::Relink::Apply(bool reverse) {
 	std::swap(node_->parent_, parent_);
 
 	auto other_next = Next(node_);
@@ -320,7 +320,6 @@ void ListProperty<Type, Tag>::Clear() {
 template<typename Type, typename Tag>
 ListProperty<Type, Tag>::ReplaceAll::ReplaceAll(ListProperty* list)
 	: list_(list)
-	, reverse_(false)
 {
 	for (auto& it : *list_) {
 		items_.push_back(&it);
@@ -328,10 +327,10 @@ ListProperty<Type, Tag>::ReplaceAll::ReplaceAll(ListProperty* list)
 }
 
 template<typename Type, typename Tag>
-void ListProperty<Type, Tag>::ReplaceAll::Apply() {
+void ListProperty<Type, Tag>::ReplaceAll::Apply(bool reverse) {
 	auto* head = &list_->head_;
 
-	if (reverse_) {
+	if (reverse) {
 		for (auto* it : items_) {
 			ListNode::Link(ListNode::Prev(head), it);
 			ListNode::Link(it, head);
@@ -346,7 +345,6 @@ void ListProperty<Type, Tag>::ReplaceAll::Apply() {
 	}
 
 	list_->owner_->OnPropertyChange(list_);
-	reverse_ = !reverse_;
 }
 
 

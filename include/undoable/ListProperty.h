@@ -96,7 +96,7 @@ private:
 	class Relink : public Command {
 	public:
 		Relink(ListNode* node, ListNode* next, ListProperty* parent);
-		virtual void Apply() override;
+		virtual void Apply(bool reverse) override;
 
 	private:
 		ListNode* node_;
@@ -205,12 +205,11 @@ protected:
 	class ReplaceAll : public Command {
 	public:
 		ReplaceAll(ListProperty* list);
-		virtual void Apply() override;
+		virtual void Apply(bool reverse) override;
 
 	private:
 		std::vector<ListNode*> items_;
 		ListProperty* list_;
-		bool reverse_ = false;
 	};
 
 	ListProperty(ListProperty&&) = delete;

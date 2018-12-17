@@ -8,7 +8,7 @@
 
 class Tick : public undoable::Command {
 public:
-	virtual void Apply() override {
+	virtual void Apply(bool reverse) override {
 		std::cout << (value_ ? ">" : "<") << std::endl;
 		value_ = !value_;
 	}
@@ -30,7 +30,7 @@ public:
 		, back_(rev)
 	{}
 
-	virtual void Apply() override {
+	virtual void Apply(bool reverse) override {
 		std::cout << forw_;
 		std::swap(forw_, back_);
 	}

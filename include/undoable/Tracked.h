@@ -44,7 +44,7 @@ private:
 	public:
 		StatusChange(Tracked* obj, bool create);
 		virtual ~StatusChange();
-		virtual void Apply() override;
+		virtual void Apply(bool reverse) override;
 
 	private:
 		Tracked* obj_;

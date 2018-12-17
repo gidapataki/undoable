@@ -1,4 +1,6 @@
 #include "undoable/History.h"
+#include <cassert>
+
 
 namespace undoable {
 
@@ -22,14 +24,15 @@ bool Transaction::IsEmpty() const {
 }
 
 void Transaction::Apply(UniquePtr<Command> command) {
-	command->Apply();
+	command->Apply(reverse_);
 	commands_.push_back(std::move(command));
 }
 
-void Transaction::ReverseApply() {
+void Transaction::Reverse() {
+	reverse_ = !reverse_;
 	commands_.reverse();
 	for (auto& cmd : commands_) {
-		cmd->Apply();
+		cmd->Apply(reverse_);
 	}
 }
 
@@ -45,7 +48,7 @@ void History::Stage(UniquePtr<Command> command) {
 }
 
 void History::Unstage() {
-	stage_.ReverseApply();
+	stage_.Reverse();
 	stage_.Clear();
 }
 
@@ -66,7 +69,7 @@ void History::Undo() {
 		return;
 	}
 
-	undo_.back().ReverseApply();
+	undo_.back().Reverse();
 
 	auto it = undo_.end();
 	--it;
@@ -78,7 +81,7 @@ void History::Redo() {
 		return;
 	}
 
-	redo_.front().ReverseApply();
+	redo_.front().Reverse();
 	undo_.splice(undo_.end(), redo_, redo_.begin());
 }
 
