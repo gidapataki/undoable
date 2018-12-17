@@ -1,4 +1,5 @@
 #include <iostream>
+#include <string>
 #include <vector>
 #include <initializer_list>
 #include <functional>
@@ -17,34 +18,35 @@ public:
 		return instance;
 	}
 
-	void Add(TestFunc fn) {
-		tests_.push_back(std::move(fn));
+	void Add(const std::string& name, TestFunc fn) {
+		tests_.push_back({name, std::move(fn)});
 	}
 
 	void RunAll() {
-		for (auto& fn : tests_) {
-			fn();
+		for (auto& t : tests_) {
+			std::cerr << "Running " << t.first << " ..." << std::endl;
+			t.second();
 		}
 	}
 
 private:
 	TestRunner() = default;
 
-	std::vector<TestFunc> tests_;
+	std::vector<std::pair<std::string, TestFunc>> tests_;
 };
 
 
 class TestRegistrar {
 public:
-	TestRegistrar(TestFunc fn) {
-		TestRunner::Get().Add(std::move(fn));
+	TestRegistrar(const std::string& name, TestFunc fn) {
+		TestRunner::Get().Add(name, std::move(fn));
 	}
 };
-
 
 #define TEST(testname, testcase) \
 	void testname ## __ ## testcase (); \
 	TestRegistrar reg_ ## testname ## __ ## testcase( \
+		#testname "." #testcase, \
 		testname ## __ ## testcase); \
 	void testname ## __ ## testcase ()
 

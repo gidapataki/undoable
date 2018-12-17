@@ -40,7 +40,7 @@ public:
 };
 
 
-TEST(TestValueProperty, Init) {
+TEST(ValuePropertyTest, Init) {
 	Store s;
 
 	EXPECT_EQ(0, s.prop_int1.Get());
@@ -49,7 +49,7 @@ TEST(TestValueProperty, Init) {
 	EXPECT_EQ(MakeVector<int>({5, 7}), s.prop_vec.Get());
 }
 
-TEST(TestValueProperty, Changes) {
+TEST(ValuePropertyTest, Changes) {
 	Store s;
 
 	EXPECT_EQ(0, s.apply_count);
@@ -77,7 +77,7 @@ TEST(TestValueProperty, Changes) {
 	EXPECT_EQ(&s.prop_str, s.last_handler);
 }
 
-TEST(TestValueProperty, Equality) {
+TEST(ValuePropertyTest, Equality) {
 	Store s;
 
 	EXPECT_EQ(0, s.apply_count);
