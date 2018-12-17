@@ -6,6 +6,24 @@
 namespace undoable {
 
 
+// TrackedNode
+
+TrackedNode::TrackedNode() {
+	next_ = this;
+	prev_ = this;
+}
+
+TrackedNode::~TrackedNode() {
+	next_->prev_ = prev_;
+	prev_->next_ = next_;
+}
+
+void TrackedNode::Link(TrackedNode* u, TrackedNode* v) {
+	u->next_ = v;
+	v->prev_ = u;
+}
+
+
 // Tracked
 
 Tracked::~Tracked() {

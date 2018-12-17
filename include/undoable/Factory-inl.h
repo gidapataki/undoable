@@ -10,7 +10,7 @@ Type& Factory::Create(Args&&... args) {
 		"Missing base class");
 
 	Type* obj = new Type(args...);
-	objects_.LinkBack(*obj);
+	LinkBack(obj);
 	obj->Init(&history_);
 	return *obj;
 }

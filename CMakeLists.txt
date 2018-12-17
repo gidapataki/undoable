@@ -14,5 +14,5 @@ add_executable(test-undoable
 )
 
 target_include_directories(test-undoable
-    PUBLIC include ../intrusive/include
+    PUBLIC include
 )

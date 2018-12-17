@@ -3,18 +3,32 @@
 #include "undoable/History.h"
 #include "undoable/Property.h"
 #include "undoable/ListProperty.h"
-#include "intrusive/List.h"
 
 
 namespace undoable {
 
 class Tracked;
+class TrackedNode;
 template<typename T> class Object;
+
+
+class TrackedNode {
+public:
+	TrackedNode();
+	~TrackedNode();
+
+private:
+	friend class Factory;
+	static void Link(TrackedNode* u, TrackedNode* v);
+
+	TrackedNode* next_;
+	TrackedNode* prev_;
+};
 
 
 class Tracked
 	: public PropertyOwner
-	, public intrusive::Node<Tracked> // todo replace
+	, public TrackedNode
 {
 public:
 	void Destroy();

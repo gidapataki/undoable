@@ -1,7 +1,6 @@
 #pragma once
 #include "undoable/Tracked.h"
 #include "undoable/History.h"
-#include "intrusive/List.h"
 
 namespace undoable {
 
@@ -14,8 +13,11 @@ public:
 	History& GetHistory();
 
 private:
+	void LinkBack(TrackedNode* node);
+	TrackedNode* NextTracked();
+
 	History history_;
-	intrusive::List<Tracked> objects_;
+	TrackedNode head_;
 };
 
 } // namespace undoable
