@@ -24,6 +24,10 @@ add_executable(test-undoable
     ${undoable_test_srcs}
 )
 
+target_link_libraries(test-undoable
+    PUBLIC undoable
+)
+
 target_include_directories(test-undoable
     PUBLIC include test
 )
