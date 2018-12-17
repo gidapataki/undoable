@@ -13,9 +13,11 @@ class Property {
 public:
 	Property(PropertyOwner* owner);
 	virtual ~Property() = default;
+	virtual void Reset() {}
 
 protected:
 	friend class PropertyOwner;
+
 	Property* next_property_ = nullptr;
 	PropertyOwner* owner_ = nullptr;
 };
@@ -23,16 +25,11 @@ protected:
 
 class PropertyOwner {
 public:
-	/*
-	 * Abstract class for classes with properties.
-	 * Note that recording a change in History is the responsibility
-	 * of the implementing class. These classes have to have virtual functions
-	 * anyway, so omitting this abstraction layer would not help.
-	 */
-
-	virtual void OnPropertyChange() = 0;
+	virtual ~PropertyOwner() = default;
+	virtual void OnPropertyChange(Property* property) = 0;
 	virtual void ApplyPropertyChange(UniquePtr<Command> command) = 0;
 	void RegisterProperty(Property* property);
+	void ResetProperties();
 
 protected:
 	Property* first_property_ = nullptr;

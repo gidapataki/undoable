@@ -2,6 +2,7 @@
 #include "undoable/Property.h"
 #include "undoable/ListProperty.h"
 #include "undoable/Tracked.h"
+#include "undoable/Factory.h"
 #include <iostream>
 
 
@@ -51,11 +52,10 @@ void MakePrint(undoable::History& h, const std::string& msg) {
 }
 
 
-class Shape : public undoable::Tracked {
+class Shape : public undoable::Object<Shape> {
 public:
-	Shape(undoable::History* history, const std::string& name)
-		: undoable::Tracked(history)
-		, x(this)
+	Shape(const std::string& name)
+		: x(this)
 		, y(this)
 		, name(this, name)
 	{}
@@ -71,41 +71,39 @@ public:
 
 
 class Item
-	: public undoable::Tracked
-	, public undoable::ListNode<Item>
+	: public undoable::Object<Item>
+	, public undoable::ListNode<Item, struct tag_0>
 {
 public:
-	Item(undoable::History* history)
-		: undoable::Tracked(history)
-	{}
+	Item() = default;
 
 	int x = 0;
 };
 
 class Container
-	: public undoable::Tracked
+	: public undoable::Object<Container>
 {
 public:
-	Container(undoable::History* history)
-		: undoable::Tracked(history)
-		, ls(this)
+	Container()
+		: ls(this)
 	{}
 
-	void Dump() {
-		std::cout << "C";
+	void Dump(int k) {
+		std::cout << k << ") C";
 		for (auto& item : ls) {
 			std::cout << " " << item.x;
 		}
 		std::cout << " ." << std::endl;
 	}
 
-	undoable::ListProperty<Item> ls;
+	undoable::ListProperty<Item, struct tag_0> ls;
 };
 
 
 void TestValueProperty() {
-	undoable::History h;
-	Shape s(&h, "initial");
+	undoable::Factory f;
+	auto& h = f.GetHistory();
+	auto& s = f.Create<Shape>("initial");
 	s.Dump();	// initial
 
 	s.name.Set("changed-1");
@@ -127,12 +125,13 @@ void TestValueProperty() {
 
 
 void TestListProperty() {
-	undoable::History h;
+	undoable::Factory f;
+	auto& h = f.GetHistory();
 
-	Container c(&h);
-	Container c2(&h);
-	Item i1(&h);
-	Item i2(&h);
+	auto& c = f.Create<Container>();
+	auto& c2 = f.Create<Container>();
+	auto& i1 = f.Create<Item>();
+	auto& i2 = f.Create<Item>();
 
 	c.ls.LinkFront(i1);
 	c.ls.LinkBack(i2);
@@ -140,31 +139,40 @@ void TestListProperty() {
 	i1.x = 5;
 	i2.x = 7;
 
-	c.Dump();
+	c.Dump(__LINE__);
 	h.Commit();
 
 	h.Undo();
-	c.Dump();
+	c.Dump(__LINE__);
 
 	h.Redo();
-	c.Dump();
+	c.Dump(__LINE__);
 
 	c.ls.Clear();
 	h.Commit();
-	c.Dump();
+	c.Dump(__LINE__);
 
 	h.Undo();
-	c.Dump();
+	c.Dump(__LINE__);
 
-	// c.ls.LinkFront(i2);
-	// c.Dump();
-	// h.Unstage();
-	// c.Dump();
+	c.ls.LinkFront(i2);
+	c.Dump(__LINE__);
+	h.Unstage();
+	c.Dump(__LINE__);
 
-	// c2.ls.LinkBack(i2);
-	// c.ls.Remove(c.ls.begin());
-	// c.Dump();
-	// c2.Dump();
+	c2.ls.LinkBack(i2);
+	c.ls.Remove(c.ls.begin());
+	c.Dump(__LINE__);
+	c2.Dump(__LINE__);
+
+	h.Commit();
+	c.ls.LinkBack(i1);
+	c.Dump(__LINE__);
+
+	i1.Destroy();
+
+	h.Commit();
+	c.Dump(__LINE__);
 }
 
 

@@ -37,8 +37,7 @@ void Transaction::ReverseApply() {
 // History
 
 History::~History() {
-	ClearUndo();
-	ClearRedo();
+	Clear();
 }
 
 void History::Stage(UniquePtr<Command> command) {
@@ -93,6 +92,12 @@ void History::ClearUndo() {
 	while (!undo_.empty()) {
 		undo_.pop_front();
 	}
+}
+
+void History::Clear() {
+	Unstage();
+	ClearUndo();
+	ClearRedo();
 }
 
 } // namespace undoable

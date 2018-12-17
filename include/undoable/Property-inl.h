@@ -18,8 +18,10 @@ const T& ValueProperty<T>::Get() const {
 
 template<typename T>
 void ValueProperty<T>::Set(T value) {
-	auto cmd = MakeUnique<Change>(this, std::move(value));
-	owner_->ApplyPropertyChange(std::move(cmd));
+	if (value != value_) {
+		auto cmd = MakeUnique<Change>(this, std::move(value));
+		owner_->ApplyPropertyChange(std::move(cmd));
+	}
 }
 
 template<typename T>
@@ -31,7 +33,7 @@ ValueProperty<T>::Change::Change(ValueProperty* property, T value)
 template<typename T>
 void ValueProperty<T>::Change::Apply() {
 	std::swap(property_->value_, value_);
-	property_->owner_->OnPropertyChange();
+	property_->owner_->OnPropertyChange(property_);
 }
 
 } // namespace undoable

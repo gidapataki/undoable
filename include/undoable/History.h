@@ -29,6 +29,7 @@ private:
 class History {
 public:
 	~History();
+	void Clear();
 
 	void Stage(UniquePtr<Command> command);
 	void Unstage();

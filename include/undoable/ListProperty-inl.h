@@ -4,6 +4,7 @@
 
 namespace undoable {
 
+
 // ListNode
 
 template<typename Type, typename Tag>
@@ -11,7 +12,15 @@ ListNode<Type, Tag>::ListNode()
 	: next_(this)
 	, prev_(this)
 	, parent_(nullptr)
-{}
+{
+	auto* registry = &StaticRegistry<Type, tag_Unlinker>::Get();
+	static Unlinker unlinker(registry);
+}
+
+template<typename Type, typename Tag>
+ListNode<Type, Tag>::~ListNode() {
+	// fixme implement
+}
 
 template<typename Type, typename Tag>
 void ListNode<Type, Tag>::Unlink() {
@@ -44,6 +53,26 @@ void ListNode<Type, Tag>::Link(ListNode* u, ListNode* v) {
 	v->prev_ = u;
 }
 
+template<typename Type, typename Tag>
+ListNode<Type, Tag>& ListNode<Type, Tag>::Next(ListNode& node) {
+	return *node.next_;
+}
+
+template<typename Type, typename Tag>
+ListNode<Type, Tag>& ListNode<Type, Tag>::Prev(ListNode& node) {
+	return *node.prev_;
+}
+
+template<typename Type, typename Tag>
+ListNode<Type, Tag>* ListNode<Type, Tag>::Next(ListNode* node) {
+	return node->next_;
+}
+
+template<typename Type, typename Tag>
+ListNode<Type, Tag>* ListNode<Type, Tag>::Prev(ListNode* node) {
+	return node->prev_;
+}
+
 
 // ListNode::Relink
 
@@ -59,25 +88,25 @@ template<typename Type, typename Tag>
 void ListNode<Type, Tag>::Relink::Apply() {
 	std::swap(node_->parent_, parent_);
 
-	auto other_next = node_->next_;
+	auto other_next = Next(node_);
 	auto other_parent = node_->parent_;
 
-	Link(node_->prev_, node_->next_);
+	Link(Prev(node_), Next(node_));
 	if (next_ != node_) {
-		Link(next_->prev_, node_);
+		Link(Prev(next_), node_);
 	}
 	Link(node_, next_);
 	next_ = other_next;
 
 	if (parent_) {
 		// The old parent is notified first
-		parent_->owner_->OnPropertyChange();
+		parent_->owner_->OnPropertyChange(parent_);
 	}
 	if (other_parent && parent_ != other_parent) {
 		// The current parent is notified second,
 		// so the node disappears first and then reappears.
 		// If the same list is used, then we only notify once.
-		other_parent->owner_->OnPropertyChange();
+		other_parent->owner_->OnPropertyChange(other_parent);
 	}
 }
 
@@ -91,7 +120,7 @@ ListIterator<Type, Tag>::ListIterator(ListNode* node)
 
 template<typename Type, typename Tag>
 ListIterator<Type, Tag>& ListIterator<Type, Tag>::operator++() {
-	node_ = node_->next_;
+	node_ = ListNode::Next(node_);
 	return *this;
 }
 
@@ -146,13 +175,17 @@ ListProperty<Type, Tag>::ListProperty(PropertyOwner* owner)
 }
 
 template<typename Type, typename Tag>
+ListProperty<Type, Tag>::~ListProperty()
+{}
+
+template<typename Type, typename Tag>
 void ListProperty<Type, Tag>::UnlinkFront() {
-	head_.next_->Unlink();
+	Next(head_).Unlink();
 }
 
 template<typename Type, typename Tag>
 void ListProperty<Type, Tag>::UnlinkBack() {
-	head_.prev_->Unlink();
+	Prev(head_).Unlink();
 }
 
 template<typename Type, typename Tag>
@@ -165,7 +198,8 @@ void ListProperty<Type, Tag>::LinkAt(iterator pos, ListNode& u) {
 
 template<typename Type, typename Tag>
 void ListProperty<Type, Tag>::LinkFront(ListNode& u) {
-	auto cmd = MakeUnique<typename ListNode::Relink>(&u, head_.next_, this);
+	auto cmd = MakeUnique<typename ListNode::Relink>(
+		&u, &ListNode::Next(head_), this);
 	owner_->ApplyPropertyChange(std::move(cmd));
 }
 
@@ -182,7 +216,7 @@ bool ListProperty<Type, Tag>::IsEmpty() const {
 
 template<typename Type, typename Tag>
 Type& ListProperty<Type, Tag>::Front() {
-	return *head_.next_->Object();
+	return *Next(head_).Object();
 }
 
 template<typename Type, typename Tag>
@@ -192,7 +226,7 @@ Type& ListProperty<Type, Tag>::Back() {
 
 template<typename Type, typename Tag>
 const Type& ListProperty<Type, Tag>::Front() const {
-	return *head_.next_->Object();
+	return *Next(head_)->Object();
 }
 
 template<typename Type, typename Tag>
@@ -202,7 +236,7 @@ const Type& ListProperty<Type, Tag>::Back() const {
 
 template<typename Type, typename Tag>
 typename ListProperty<Type, Tag>::iterator ListProperty<Type, Tag>::begin() {
-	return iterator(head_.next_);
+	return iterator(&ListNode::Next(head_));
 }
 
 template<typename Type, typename Tag>
@@ -212,7 +246,7 @@ typename ListProperty<Type, Tag>::iterator ListProperty<Type, Tag>::end() {
 
 template<typename Type, typename Tag>
 typename ListProperty<Type, Tag>::const_iterator ListProperty<Type, Tag>::begin() const {
-	return const_iterator(head_.next_);
+	return const_iterator(&Next(head_));
 }
 
 template<typename Type, typename Tag>
@@ -222,7 +256,7 @@ typename ListProperty<Type, Tag>::const_iterator ListProperty<Type, Tag>::end() 
 
 template<typename Type, typename Tag>
 typename ListProperty<Type, Tag>::const_iterator ListProperty<Type, Tag>::cbegin() const {
-	return const_iterator(head_.next_);
+	return const_iterator(&Next(head_));
 }
 
 template<typename Type, typename Tag>
@@ -299,7 +333,7 @@ void ListProperty<Type, Tag>::ReplaceAll::Apply() {
 
 	if (reverse_) {
 		for (auto* it : items_) {
-			ListNode::Link(head->prev_, it);
+			ListNode::Link(ListNode::Prev(head), it);
 			ListNode::Link(it, head);
 			it->parent_ = list_;
 		}
@@ -311,8 +345,18 @@ void ListProperty<Type, Tag>::ReplaceAll::Apply() {
 		}
 	}
 
-	list_->owner_->OnPropertyChange();
+	list_->owner_->OnPropertyChange(list_);
 	reverse_ = !reverse_;
+}
+
+
+// OwningListProperty
+
+template<typename Type, typename Tag>
+OwningListProperty<Type, Tag>::OwningListProperty(PropertyOwner* owner)
+	: ListProperty<Type, Tag>(owner)
+{
+	ListProperty<Type, Tag>::owning_ = true;
 }
 
 } // namespace
