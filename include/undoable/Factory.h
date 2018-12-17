@@ -1,5 +1,4 @@
 #pragma once
-#include <type_traits>
 #include "undoable/Tracked.h"
 #include "undoable/History.h"
 #include "intrusive/List.h"
@@ -11,21 +10,8 @@ public:
 	Factory() = default;
 	~Factory();
 
+	template<typename Type, typename... Args> Type& Create(Args&&... args);
 	History& GetHistory();
-
-	template<typename T, typename... Args>
-	T& Create(Args&&... args) {
-		static_assert(
-			std::is_base_of<Tracked, T>::value,
-			"Type is not derived from `Tracked`");
-
-		T* obj = new T(args...);
-		Tracked* tracked = static_cast<Tracked*>(obj);
-
-		objects_.LinkBack(*tracked);
-		tracked->Init(&history_);
-		return *obj;
-	}
 
 private:
 	History history_;
@@ -33,3 +19,5 @@ private:
 };
 
 } // namespace undoable
+
+#include "undoable/Factory-inl.h"

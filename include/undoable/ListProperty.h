@@ -4,72 +4,15 @@
 #include <vector>
 #include "undoable/Property.h"
 #include "undoable/Command.h"
+#include "undoable/Registry.h"
 
 
 namespace undoable {
 
 struct tag_Unlinker;
-class PropertyOwner;
-
 template<typename Type, typename Tag> class ListNode;
 template<typename Type, typename Tag> class ListProperty;
 template<typename Type, typename Tag> class ListIterator;
-
-
-// --
-
-class Registry;
-class Registered;
-
-
-class Registered {
-public:
-	virtual ~Registered() {}
-	virtual void Notify(void* userdata) {}
-
-private:
-	friend class Registry;
-
-	Registered* next_ = nullptr;
-};
-
-
-class Registry {
-public:
-	void NotifyAll(void* userdata) {
-		for (auto* p = first_; p; p = p->next_) {
-			p->Notify(userdata);
-		}
-	}
-
-	void Add(Registered* node) {
-		if (!last_) {
-			first_ = last_ = node;
-		} else {
-			last_->next_ = node;
-			last_ = node;
-		}
-	}
-
-private:
-	Registered* first_ = nullptr;
-	Registered* last_ = nullptr;
-};
-
-
-template<typename Type, typename Tag>
-class StaticRegistry
-	: public Registry
-{
-public:
-	static StaticRegistry& Get() {
-		static StaticRegistry instance;
-		return instance;
-	}
-
-private:
-	StaticRegistry() = default;
-};
 
 
 template<typename Type, typename Tag>
@@ -106,14 +49,8 @@ private:
 
 	class Unlinker : public Registered {
 	public:
-		Unlinker(Registry* registry) {
-			registry->Add(this);
-		}
-
-		virtual void Notify(void* userdata) {
-			auto* obj = reinterpret_cast<Type*>(userdata);
-			static_cast<ListNode*>(obj)->Unlink();
-		}
+		Unlinker(Registry* registry);
+		virtual void Notify(void* userdata) override;
 	};
 
 	static void Link(ListNode* u, ListNode* v);
@@ -171,6 +108,7 @@ public:
 
 	ListProperty(PropertyOwner* owner);
 	~ListProperty();
+	virtual void OnReset() override;
 
 	// O(1)
 	void UnlinkFront();
@@ -218,18 +156,7 @@ protected:
 	ListProperty& operator=(ListProperty&&) = delete;
 
 	ListNode head_;
-	bool owning_ = false;
 };
-
-
-template<typename Type, typename Tag>
-class OwningListProperty
-	: public ListProperty<Type, Tag>
-{
-public:
-	OwningListProperty(PropertyOwner* owner);
-};
-
 
 } // namespace
 

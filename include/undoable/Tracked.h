@@ -8,6 +8,10 @@
 
 namespace undoable {
 
+class Tracked;
+template<typename T> class Object;
+
+
 class Tracked
 	: public PropertyOwner
 	, public intrusive::Node<Tracked> // todo replace

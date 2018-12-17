@@ -33,7 +33,7 @@ void Tracked::ApplyPropertyChange(UniquePtr<Command> command) {
 }
 
 void Tracked::DestroyMembers() {
-	ResetProperties();
+	ResetAllProperty();
 }
 
 void Tracked::Destroy() {

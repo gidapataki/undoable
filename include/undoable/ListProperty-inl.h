@@ -111,6 +111,20 @@ void ListNode<Type, Tag>::Relink::Apply(bool reverse) {
 }
 
 
+// ListNode::Unlinker
+
+template<typename Type, typename Tag>
+ListNode<Type, Tag>::Unlinker::Unlinker(Registry* registry) {
+	registry->Add(this);
+}
+
+template<typename Type, typename Tag>
+void ListNode<Type, Tag>::Unlinker::Notify(void* userdata) {
+	auto* obj = reinterpret_cast<Type*>(userdata);
+	static_cast<ListNode*>(obj)->Unlink();
+}
+
+
 // ListIterator
 
 template<typename Type, typename Tag>
@@ -170,13 +184,16 @@ Type& ListIterator<Type, Tag>::operator*() const {
 template<typename Type, typename Tag>
 ListProperty<Type, Tag>::ListProperty(PropertyOwner* owner)
 	: Property(owner)
-{
-	owner_->RegisterProperty(this);
-}
+{}
 
 template<typename Type, typename Tag>
 ListProperty<Type, Tag>::~ListProperty()
 {}
+
+template<typename Type, typename Tag>
+void ListProperty<Type, Tag>::OnReset() {
+	Clear();
+}
 
 template<typename Type, typename Tag>
 void ListProperty<Type, Tag>::UnlinkFront() {
@@ -345,16 +362,6 @@ void ListProperty<Type, Tag>::ReplaceAll::Apply(bool reverse) {
 	}
 
 	list_->owner_->OnPropertyChange(list_);
-}
-
-
-// OwningListProperty
-
-template<typename Type, typename Tag>
-OwningListProperty<Type, Tag>::OwningListProperty(PropertyOwner* owner)
-	: ListProperty<Type, Tag>(owner)
-{
-	ListProperty<Type, Tag>::owning_ = true;
 }
 
 } // namespace

@@ -7,9 +7,7 @@ template<typename T>
 ValueProperty<T>::ValueProperty(PropertyOwner* owner, T value)
 	: Property(owner)
 	, value_(std::move(value))
-{
-	owner_->RegisterProperty(this);
-}
+{}
 
 template<typename T>
 const T& ValueProperty<T>::Get() const {

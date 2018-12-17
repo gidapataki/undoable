@@ -1,6 +1,7 @@
 #include "undoable/History.h"
-#include "undoable/Property.h"
+#include "undoable/ValueProperty.h"
 #include "undoable/ListProperty.h"
+#include "undoable/OwningListProperty.h"
 #include "undoable/Tracked.h"
 #include "undoable/Factory.h"
 #include <iostream>
@@ -96,7 +97,7 @@ public:
 		std::cout << " ." << std::endl;
 	}
 
-	undoable::ListProperty<Item, struct tag_0> ls;
+	undoable::OwningListProperty<Item, struct tag_0> ls;
 };
 
 

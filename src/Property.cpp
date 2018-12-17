@@ -3,24 +3,21 @@
 
 namespace undoable {
 
-
 Property::Property(PropertyOwner* owner)
 	: owner_(owner)
-{}
-
-void PropertyOwner::RegisterProperty(Property* property) {
-	if (!last_property_) {
-		first_property_ = property;
-		last_property_ = property;
+{
+	if (!owner->last_property_) {
+		owner->first_property_ = this;
+		owner->last_property_ = this;
 	} else {
-		last_property_->next_property_ = property;
-		last_property_ = property;
+		owner->last_property_->next_property_ = this;
+		owner->last_property_ = this;
 	}
 }
 
-void PropertyOwner::ResetProperties() {
+void PropertyOwner::ResetAllProperty() {
 	for (auto* p = first_property_; p; p = p->next_property_) {
-		p->Reset();
+		p->OnReset();
 	}
 }
 

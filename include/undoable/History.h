@@ -3,8 +3,11 @@
 #include "undoable/UniquePtr.h"
 #include "undoable/Command.h"
 
-
 namespace undoable {
+
+class Transaction;
+class History;
+
 
 class Transaction {
 public:
@@ -46,6 +49,5 @@ private:
 	std::list<Transaction> redo_;
 	Transaction stage_;
 };
-
 
 } // namespace undoable
