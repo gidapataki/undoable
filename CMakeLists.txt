@@ -8,11 +8,22 @@ file(GLOB undoable_srcs
     src/*.cpp
 )
 
-add_executable(test-undoable
-    test/test.cpp
+file(GLOB undoable_test_srcs
+    test/*.cpp
+)
+
+add_library(undoable
     ${undoable_srcs}
 )
 
+target_include_directories(undoable
+    PUBLIC include src
+)
+
+add_executable(test-undoable
+    ${undoable_test_srcs}
+)
+
 target_include_directories(test-undoable
-    PUBLIC include
+    PUBLIC include test
 )
