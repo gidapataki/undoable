@@ -140,44 +140,44 @@ void TestListProperty() {
 	i1.x = 5;
 	i2.x = 7;
 
-	c.Dump(__LINE__);
+	c.Dump(__LINE__); // 5 7 .
 	h.Commit();
 
 	h.Undo();
-	c.Dump(__LINE__);
+	c.Dump(__LINE__); // .
 
 	h.Redo();
-	c.Dump(__LINE__);
+	c.Dump(__LINE__); // 5 7 .
 
 	c.ls.Clear();
 	h.Commit();
-	c.Dump(__LINE__);
+	c.Dump(__LINE__); // .
 
 	h.Undo();
-	c.Dump(__LINE__);
+	c.Dump(__LINE__); // 5 7 .
 
 	c.ls.LinkFront(i2);
-	c.Dump(__LINE__);
+	c.Dump(__LINE__); // 7 5 .
 	h.Unstage();
-	c.Dump(__LINE__);
+	c.Dump(__LINE__); // 5 7 .
 
 	c2.ls.LinkBack(i2);
 	c.ls.Remove(c.ls.begin());
-	c.Dump(__LINE__);
-	c2.Dump(__LINE__);
+	c.Dump(__LINE__); // .
+	c2.Dump(__LINE__); // 7 .
 
 	h.Commit();
 	c.ls.LinkBack(i1);
-	c.Dump(__LINE__);
+	c.Dump(__LINE__); // 5 .
 
 	i1.Destroy();
 
 	h.Commit();
-	c.Dump(__LINE__);
+	c.Dump(__LINE__); // .
 }
 
 
-int main() {
+int main2() {
 	TestListProperty();
 	return 0;
 }
