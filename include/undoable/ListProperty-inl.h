@@ -8,33 +8,9 @@ namespace undoable {
 // ListNode
 
 template<typename Type, typename Tag>
-ListNode<Type, Tag>::ListNode()
-	: next_(this)
-	, prev_(this)
-	, parent_(nullptr)
-{
+ListNode<Type, Tag>::ListNode() {
 	auto* registry = &StaticRegistry<Type, tag_Unlinker>::Get();
 	static Unlinker unlinker(registry);
-}
-
-template<typename Type, typename Tag>
-ListNode<Type, Tag>::~ListNode() {
-	// fixme implement
-}
-
-template<typename Type, typename Tag>
-void ListNode<Type, Tag>::Unlink() {
-	if (parent_ == nullptr) {
-		return;
-	}
-
-	auto cmd = MakeUnique<Relink>(this, this, nullptr);
-	parent_->owner_->ApplyPropertyChange(std::move(cmd));
-}
-
-template<typename Type, typename Tag>
-bool ListNode<Type, Tag>::IsLinked() const {
-	return next_ != this;
 }
 
 template<typename Type, typename Tag>
@@ -48,67 +24,26 @@ const Type* ListNode<Type, Tag>::Object() const {
 }
 
 template<typename Type, typename Tag>
-void ListNode<Type, Tag>::Link(ListNode* u, ListNode* v) {
-	u->next_ = v;
-	v->prev_ = u;
-}
-
-template<typename Type, typename Tag>
 ListNode<Type, Tag>& ListNode<Type, Tag>::Next(ListNode& node) {
-	return *node.next_;
+	return *static_cast<ListNode*>(node.next_);
 }
 
 template<typename Type, typename Tag>
 ListNode<Type, Tag>& ListNode<Type, Tag>::Prev(ListNode& node) {
-	return *node.prev_;
+	return *static_cast<ListNode*>(node.prev_);
 }
 
 template<typename Type, typename Tag>
 ListNode<Type, Tag>* ListNode<Type, Tag>::Next(ListNode* node) {
-	return node->next_;
+	return static_cast<ListNode*>(node->next_);
 }
 
 template<typename Type, typename Tag>
 ListNode<Type, Tag>* ListNode<Type, Tag>::Prev(ListNode* node) {
-	return node->prev_;
+	return static_cast<ListNode*>(node->prev_);
 }
 
 
-// ListNode::Relink
-
-template<typename Type, typename Tag>
-ListNode<Type, Tag>::Relink::Relink(
-		ListNode* node, ListNode* next, ListProperty* parent)
-	: node_(node)
-	, next_(next)
-	, parent_(parent)
-{}
-
-template<typename Type, typename Tag>
-void ListNode<Type, Tag>::Relink::Apply(bool reverse) {
-	std::swap(node_->parent_, parent_);
-
-	auto other_next = Next(node_);
-	auto other_parent = node_->parent_;
-
-	Link(Prev(node_), Next(node_));
-	if (next_ != node_) {
-		Link(Prev(next_), node_);
-	}
-	Link(node_, next_);
-	next_ = other_next;
-
-	if (parent_) {
-		// The old parent is notified first
-		parent_->owner_->OnPropertyChange(parent_);
-	}
-	if (other_parent && parent_ != other_parent) {
-		// The current parent is notified second,
-		// so the node disappears first and then reappears.
-		// If the same list is used, then we only notify once.
-		other_parent->owner_->OnPropertyChange(other_parent);
-	}
-}
 
 
 // ListNode::Unlinker
@@ -183,7 +118,7 @@ Type& ListIterator<Type, Tag>::operator*() const {
 
 template<typename Type, typename Tag>
 ListProperty<Type, Tag>::ListProperty(PropertyOwner* owner)
-	: Property(owner)
+	: ListPropertyBase(owner)
 {}
 
 template<typename Type, typename Tag>
@@ -197,12 +132,12 @@ void ListProperty<Type, Tag>::OnReset() {
 
 template<typename Type, typename Tag>
 void ListProperty<Type, Tag>::UnlinkFront() {
-	Next(head_).Unlink();
+	Next(Head()).Unlink();
 }
 
 template<typename Type, typename Tag>
 void ListProperty<Type, Tag>::UnlinkBack() {
-	Prev(head_).Unlink();
+	Prev(Head()).Unlink();
 }
 
 template<typename Type, typename Tag>
@@ -216,13 +151,13 @@ void ListProperty<Type, Tag>::LinkAt(iterator pos, ListNode& u) {
 template<typename Type, typename Tag>
 void ListProperty<Type, Tag>::LinkFront(ListNode& u) {
 	auto cmd = MakeUnique<typename ListNode::Relink>(
-		&u, &ListNode::Next(head_), this);
+		&u, &ListNode::Next(Head()), this);
 	owner_->ApplyPropertyChange(std::move(cmd));
 }
 
 template<typename Type, typename Tag>
 void ListProperty<Type, Tag>::LinkBack(ListNode& u) {
-	auto cmd = MakeUnique<typename ListNode::Relink>(&u, &head_, this);
+	auto cmd = MakeUnique<typename ListNode::Relink>(&u, &Head(), this);
 	owner_->ApplyPropertyChange(std::move(cmd));
 }
 
@@ -238,47 +173,47 @@ Type& ListProperty<Type, Tag>::Front() {
 
 template<typename Type, typename Tag>
 Type& ListProperty<Type, Tag>::Back() {
-	return *head_.prev_->Object();
+	return *Prev(head_).Object();
 }
 
 template<typename Type, typename Tag>
 const Type& ListProperty<Type, Tag>::Front() const {
-	return *Next(head_)->Object();
+	return *Next(head_).Object();
 }
 
 template<typename Type, typename Tag>
 const Type& ListProperty<Type, Tag>::Back() const {
-	return *head_.prev_->Object();
+	return *Prev(head_).Object();
 }
 
 template<typename Type, typename Tag>
 typename ListProperty<Type, Tag>::iterator ListProperty<Type, Tag>::begin() {
-	return iterator(&ListNode::Next(head_));
+	return iterator(&ListNode::Next(Head()));
 }
 
 template<typename Type, typename Tag>
 typename ListProperty<Type, Tag>::iterator ListProperty<Type, Tag>::end() {
-	return iterator(&head_);
+	return iterator(&Head());
 }
 
 template<typename Type, typename Tag>
 typename ListProperty<Type, Tag>::const_iterator ListProperty<Type, Tag>::begin() const {
-	return const_iterator(&Next(head_));
+	return const_iterator(&Next(Head()));
 }
 
 template<typename Type, typename Tag>
 typename ListProperty<Type, Tag>::const_iterator ListProperty<Type, Tag>::end() const {
-	return const_iterator(&head_);
+	return const_iterator(&Head());
 }
 
 template<typename Type, typename Tag>
 typename ListProperty<Type, Tag>::const_iterator ListProperty<Type, Tag>::cbegin() const {
-	return const_iterator(&Next(head_));
+	return const_iterator(&Next(Head()));
 }
 
 template<typename Type, typename Tag>
 typename ListProperty<Type, Tag>::const_iterator ListProperty<Type, Tag>::cend() const {
-	return const_iterator(&head_);
+	return const_iterator(&Head());
 }
 
 template<typename Type, typename Tag>
@@ -335,6 +270,14 @@ void ListProperty<Type, Tag>::Clear() {
 }
 
 template<typename Type, typename Tag>
+ListNode<Type, Tag>& ListProperty<Type, Tag>::Head() {
+	return static_cast<ListNode&>(head_);
+}
+
+
+// ListProperty<Type, Tag>::ReplaceAll
+
+template<typename Type, typename Tag>
 ListProperty<Type, Tag>::ReplaceAll::ReplaceAll(ListProperty* list)
 	: list_(list)
 {
@@ -345,7 +288,7 @@ ListProperty<Type, Tag>::ReplaceAll::ReplaceAll(ListProperty* list)
 
 template<typename Type, typename Tag>
 void ListProperty<Type, Tag>::ReplaceAll::Apply(bool reverse) {
-	auto* head = &list_->head_;
+	auto* head = &list_->Head();
 
 	if (reverse) {
 		for (auto* it : items_) {

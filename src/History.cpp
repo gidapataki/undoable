@@ -50,6 +50,7 @@ void History::Stage(UniquePtr<Command> command) {
 void History::Unstage() {
 	stage_.Reverse();
 	stage_.Clear();
+	stage_.Reverse();
 }
 
 void History::Commit() {

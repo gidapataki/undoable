@@ -86,24 +86,28 @@ void Tracked::Init(History* history) {
 Tracked::StatusChange::StatusChange(Tracked* obj, bool create)
 	: obj_(obj)
 	, create_(create)
+	, destructable_(false)
 {}
 
 Tracked::StatusChange::~StatusChange() {
-	if (create_) {
+	if (destructable_) {
 		Tracked::Destruct(obj_);
 	}
 }
 
 void Tracked::StatusChange::Apply(bool reverse) {
 	if (create_ ^ reverse) {
+		destructable_ = false;
 		obj_->status_ = Status::kOnCreate;
 		obj_->OnCreate();
 		obj_->status_ = Status::kCreated;
 	} else {
+		destructable_ = true;
 		obj_->status_ = Status::kOnDestroy;
 		obj_->OnDestroy();
 		obj_->status_ = Status::kDestroyed;
 	}
 }
+
 
 } // namespace undoable

@@ -67,6 +67,7 @@ private:
 	private:
 		Tracked* obj_;
 		bool create_;
+		bool destructable_;
 	};
 
 	History* history_ = nullptr;

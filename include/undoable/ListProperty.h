@@ -9,24 +9,69 @@
 
 namespace undoable {
 
-struct tag_Unlinker;
+struct tag_Unlinker; // fixme remmve
+
+class ListNodeBase;
+class ListPropertyBase;
+
 template<typename Type, typename Tag> class ListNode;
 template<typename Type, typename Tag> class ListProperty;
 template<typename Type, typename Tag> class ListIterator;
 
 
+class ListNodeBase {
+public:
+	ListNodeBase();
+	~ListNodeBase();
+	ListNodeBase(const ListNodeBase&) = delete;
+	ListNodeBase(ListNodeBase&&) = delete;
+	ListNodeBase& operator=(const ListNodeBase&) = delete;
+	ListNodeBase& operator=(ListNodeBase&&) = delete;
+
+	bool IsLinked() const;
+	void Unlink();
+
+protected:
+	class Relink
+		: public Command {
+	public:
+		Relink(ListNodeBase* node, ListNodeBase* next, ListPropertyBase* parent);
+		virtual void Apply(bool reverse) override;
+
+	private:
+		ListNodeBase* node_;
+		ListNodeBase* next_;
+		ListPropertyBase* parent_;
+	};
+
+	PropertyOwner* Owner();
+	static void Link(ListNodeBase* u, ListNodeBase* v);
+
+	ListNodeBase* next_;
+	ListNodeBase* prev_;
+	ListPropertyBase* parent_;
+
+private:
+	ListNodeBase* next_node_ = nullptr;
+};
+
+
+class ListNodeOwner {
+public:
+
+private:
+	ListNodeBase* first_node_ = nullptr;
+	ListNodeBase* last_node_ = nullptr;
+};
+
+
 template<typename Type, typename Tag>
-class ListNode {
+class ListNode
+	: public ListNodeBase
+{
 public:
 	ListNode();
-	~ListNode();
-	ListNode(const ListNode&) = delete;
-	ListNode(ListNode&&) = delete;
-	ListNode& operator=(const ListNode&) = delete;
-	ListNode& operator=(ListNode&&) = delete;
 
-	void Unlink();
-	bool IsLinked() const;
 	Type* Object();
 	const Type* Object() const;
 
@@ -34,18 +79,6 @@ private:
 	friend class ListProperty<Type, Tag>;
 	friend class ListIterator<Type, Tag>;
 	friend class ListIterator<const Type, Tag>;
-	using ListProperty = ListProperty<Type, Tag>;
-
-	class Relink : public Command {
-	public:
-		Relink(ListNode* node, ListNode* next, ListProperty* parent);
-		virtual void Apply(bool reverse) override;
-
-	private:
-		ListNode* node_;
-		ListNode* next_;
-		ListProperty* parent_;
-	};
 
 	class Unlinker : public Registered {
 	public:
@@ -53,15 +86,10 @@ private:
 		virtual void Notify(void* userdata) override;
 	};
 
-	static void Link(ListNode* u, ListNode* v);
 	static ListNode& Next(ListNode& node);
 	static ListNode& Prev(ListNode& node);
 	static ListNode* Next(ListNode* node);
 	static ListNode* Prev(ListNode* node);
-
-	ListProperty* parent_;
-	ListNode* next_;
-	ListNode* prev_;
 };
 
 
@@ -96,9 +124,22 @@ private:
 };
 
 
+class ListPropertyBase
+	: public Property
+{
+public:
+	ListPropertyBase(PropertyOwner* owner);
+
+protected:
+	friend class ListNodeBase;
+
+	ListNodeBase head_;
+};
+
 template<typename Type, typename Tag>
 class ListProperty
-	: public Property {
+	: public ListPropertyBase
+{
 public:
 	friend class ListNode<Type, Tag>;
 
@@ -155,7 +196,7 @@ protected:
 	ListProperty& operator=(const ListProperty&) = delete;
 	ListProperty& operator=(ListProperty&&) = delete;
 
-	ListNode head_;
+	ListNode& Head();
 };
 
 } // namespace

@@ -74,6 +74,7 @@ public:
 class Item
 	: public undoable::Object<Item>
 	, public undoable::ListNode<Item, struct tag_0>
+	, public undoable::ListNode<Item, struct tag_1>
 {
 public:
 	Item() = default;
@@ -177,7 +178,7 @@ void TestListProperty() {
 }
 
 
-int main2() {
+int main() {
 	TestListProperty();
 	return 0;
 }
