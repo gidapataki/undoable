@@ -2,7 +2,7 @@
 #include "undoable/ValueProperty.h"
 #include "undoable/ListProperty.h"
 #include "undoable/OwningListProperty.h"
-#include "undoable/Tracked.h"
+#include "undoable/Object.h"
 #include "undoable/Factory.h"
 #include <iostream>
 
@@ -53,7 +53,7 @@ void MakePrint(undoable::History& h, const std::string& msg) {
 }
 
 
-class Shape : public undoable::Object<Shape> {
+class Shape : public undoable::Object {
 public:
 	Shape(const std::string& name)
 		: x(this)
@@ -72,7 +72,7 @@ public:
 
 
 class Item
-	: public undoable::Object<Item>
+	: public undoable::Object
 	, public undoable::ListNode<Item, struct tag_0>
 	, public undoable::ListNode<Item, struct tag_1>
 {
@@ -82,8 +82,15 @@ public:
 	int x = 0;
 };
 
+
+class Item2
+	: public Item
+	, public undoable::ListNode<Item2, struct tag_2>
+{};
+
+
 class Container
-	: public undoable::Object<Container>
+	: public undoable::Object
 {
 public:
 	Container()
@@ -175,6 +182,8 @@ void TestListProperty() {
 
 	h.Commit();
 	c.Dump(__LINE__); // .
+
+	f.Create<Item2>();
 }
 
 

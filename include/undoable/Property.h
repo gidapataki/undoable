@@ -36,6 +36,7 @@ public:
 
 protected:
 	friend class Property;
+	void RegisterProperty(Property* property);
 
 	Property* first_property_ = nullptr;
 	Property* last_property_ = nullptr;

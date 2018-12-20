@@ -4,7 +4,6 @@
 #include <vector>
 #include "undoable/Property.h"
 #include "undoable/Command.h"
-#include "undoable/Registry.h"
 
 
 namespace undoable {
@@ -12,6 +11,7 @@ namespace undoable {
 struct tag_Unlinker; // fixme remmve
 
 class ListNodeBase;
+class ListNodeOwner;
 class ListPropertyBase;
 
 template<typename Type, typename Tag> class ListNode;
@@ -52,12 +52,15 @@ protected:
 	ListPropertyBase* parent_;
 
 private:
+	friend class ListNodeOwner;
 	ListNodeBase* next_node_ = nullptr;
 };
 
 
 class ListNodeOwner {
 public:
+	void RegisterListNode(ListNodeBase* node);
+	void UnlinkAllNodes();
 
 private:
 	ListNodeBase* first_node_ = nullptr;
@@ -79,12 +82,6 @@ private:
 	friend class ListProperty<Type, Tag>;
 	friend class ListIterator<Type, Tag>;
 	friend class ListIterator<const Type, Tag>;
-
-	class Unlinker : public Registered {
-	public:
-		Unlinker(Registry* registry);
-		virtual void Notify(void* userdata) override;
-	};
 
 	static ListNode& Next(ListNode& node);
 	static ListNode& Prev(ListNode& node);

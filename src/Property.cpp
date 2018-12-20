@@ -3,15 +3,25 @@
 
 namespace undoable {
 
+
+// Property
+
 Property::Property(PropertyOwner* owner)
 	: owner_(owner)
 {
-	if (!owner->last_property_) {
-		owner->first_property_ = this;
-		owner->last_property_ = this;
+	owner->RegisterProperty(this);
+}
+
+
+// PropertyOwner
+
+void PropertyOwner::RegisterProperty(Property* property) {
+	if (last_property_) {
+		last_property_->next_property_ = property;
+		last_property_ = property;
 	} else {
-		owner->last_property_->next_property_ = this;
-		owner->last_property_ = this;
+		first_property_ = property;
+		last_property_ = property;
 	}
 }
 

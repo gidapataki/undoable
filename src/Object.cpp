@@ -1,39 +1,42 @@
 #include <cassert>
 #include <iostream>
-#include "undoable/Tracked.h"
+#include "undoable/Object.h"
 
 
 namespace undoable {
 
 
-// TrackedNode
+// ObjectBase
 
-TrackedNode::TrackedNode() {
-	next_ = this;
-	prev_ = this;
+ObjectBase::ObjectBase() {
+	next_object_ = this;
+	prev_object_ = this;
 }
 
-TrackedNode::~TrackedNode() {
-	next_->prev_ = prev_;
-	prev_->next_ = next_;
+ObjectBase::~ObjectBase() {
+	next_object_->prev_object_ = prev_object_;
+	prev_object_->next_object_ = next_object_;
 }
 
-void TrackedNode::Link(TrackedNode* u, TrackedNode* v) {
-	u->next_ = v;
-	v->prev_ = u;
+void ObjectBase::Link(ObjectBase* u, ObjectBase* v) {
+	u->next_object_ = v;
+	v->prev_object_ = u;
 }
 
+bool ObjectBase::InheritanceOrderCheck() const {
+	return next_object_ == this && prev_object_ == this;
+}
 
-// Tracked
+// Object
 
-Tracked::~Tracked() {
+Object::~Object() {
 	assert(status_ != Status::kConstructed &&
 		"Object was not created through Factory");
 	assert(status_ == Status::kDestructed &&
 		"Object was not destructed through Destroy()");
 }
 
-void Tracked::ApplyPropertyChange(UniquePtr<Command> command) {
+void Object::ApplyPropertyChange(UniquePtr<Command> command) {
 	if (history_) {
 		if (status_ == Status::kCreated) {
 			history_->Stage(std::move(command));
@@ -50,11 +53,12 @@ void Tracked::ApplyPropertyChange(UniquePtr<Command> command) {
 	}
 }
 
-void Tracked::DestroyMembers() {
+void Object::DestroyMembers() {
 	ResetAllProperty();
+	UnlinkAllNodes();
 }
 
-void Tracked::Destroy() {
+void Object::Destroy() {
 	if (status_ == Status::kCreated) {
 		DestroyMembers();
 		history_->Stage(MakeUnique<StatusChange>(this, false));
@@ -68,34 +72,34 @@ void Tracked::Destroy() {
 	}
 }
 
-void Tracked::Destruct(Tracked* obj) {
+void Object::Destruct(Object* obj) {
 	// Note: destructor can freely change properties just like the ctor
 	obj->history_ = nullptr;
 	obj->status_ = Status::kDestructed;
 	delete obj;
 }
 
-void Tracked::Init(History* history) {
+void Object::Init(History* history) {
 	history_ = history;
 	history_->Stage(MakeUnique<StatusChange>(this, true));
 }
 
 
-// Tracked::StatusChange
+// Object::StatusChange
 
-Tracked::StatusChange::StatusChange(Tracked* obj, bool create)
+Object::StatusChange::StatusChange(Object* obj, bool create)
 	: obj_(obj)
 	, create_(create)
 	, destructable_(false)
 {}
 
-Tracked::StatusChange::~StatusChange() {
+Object::StatusChange::~StatusChange() {
 	if (destructable_) {
-		Tracked::Destruct(obj_);
+		Object::Destruct(obj_);
 	}
 }
 
-void Tracked::StatusChange::Apply(bool reverse) {
+void Object::StatusChange::Apply(bool reverse) {
 	if (create_ ^ reverse) {
 		destructable_ = false;
 		obj_->status_ = Status::kOnCreate;

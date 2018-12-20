@@ -1,7 +1,7 @@
 #pragma once
 #include <cassert>
 
-
+#include <iostream>
 namespace undoable {
 
 
@@ -9,8 +9,11 @@ namespace undoable {
 
 template<typename Type, typename Tag>
 ListNode<Type, Tag>::ListNode() {
-	auto* registry = &StaticRegistry<Type, tag_Unlinker>::Get();
-	static Unlinker unlinker(registry);
+	assert(static_cast<Type*>(this)->InheritanceOrderCheck() &&
+		"Invalid inheritance order");
+
+	static_cast<ListNodeOwner*>(
+		static_cast<Type*>(this))->RegisterListNode(this);
 }
 
 template<typename Type, typename Tag>
@@ -41,22 +44,6 @@ ListNode<Type, Tag>* ListNode<Type, Tag>::Next(ListNode* node) {
 template<typename Type, typename Tag>
 ListNode<Type, Tag>* ListNode<Type, Tag>::Prev(ListNode* node) {
 	return static_cast<ListNode*>(node->prev_);
-}
-
-
-
-
-// ListNode::Unlinker
-
-template<typename Type, typename Tag>
-ListNode<Type, Tag>::Unlinker::Unlinker(Registry* registry) {
-	registry->Add(this);
-}
-
-template<typename Type, typename Tag>
-void ListNode<Type, Tag>::Unlinker::Notify(void* userdata) {
-	auto* obj = reinterpret_cast<Type*>(userdata);
-	static_cast<ListNode*>(obj)->Unlink();
 }
 
 

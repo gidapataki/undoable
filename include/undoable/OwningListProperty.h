@@ -1,4 +1,4 @@
-#include "undoable/Tracked.h"
+#include "undoable/Object.h"
 #include "undoable/ListProperty.h"
 #include <type_traits>
 
@@ -12,7 +12,7 @@ class OwningListProperty
 	: public ListProperty<Type, Tag>
 {
 public:
-	static_assert(std::is_base_of<Object<Type>, Type>::value, "Invalid type");
+	static_assert(std::is_base_of<Object, Type>::value, "Invalid type");
 
 	OwningListProperty(PropertyOwner* owner);
 	virtual void OnReset() override;

@@ -75,6 +75,25 @@ void ListNodeBase::Relink::Apply(bool reverse) {
 }
 
 
+// ListNodeOwner
+
+void ListNodeOwner::RegisterListNode(ListNodeBase* node) {
+	if (last_node_) {
+		last_node_->next_node_ = node;
+		last_node_ = node;
+	} else {
+		first_node_ = node;
+		last_node_ = node;
+	}
+}
+
+void ListNodeOwner::UnlinkAllNodes() {
+	for (auto* p = first_node_; p; p = p->next_node_) {
+		p->Unlink();
+	}
+}
+
+
 // ListPropertyBase
 
 ListPropertyBase::ListPropertyBase(PropertyOwner* owner)

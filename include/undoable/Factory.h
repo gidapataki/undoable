@@ -1,5 +1,5 @@
 #pragma once
-#include "undoable/Tracked.h"
+#include "undoable/Object.h"
 #include "undoable/History.h"
 
 namespace undoable {
@@ -13,11 +13,11 @@ public:
 	History& GetHistory();
 
 private:
-	void LinkBack(TrackedNode* node);
-	TrackedNode* NextTracked();
+	void LinkBack(ObjectBase* node);
+	Object* NextObject();
 
 	History history_;
-	TrackedNode head_;
+	ObjectBase head_;
 };
 
 } // namespace undoable
