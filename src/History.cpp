@@ -61,12 +61,11 @@ void History::Commit() {
 
 	undo_.emplace_back(std::move(stage_));
 	stage_ = {};
-
 	ClearRedo();
 }
 
 void History::Undo() {
-	if (undo_.empty()) {
+	if (undo_.empty() || !stage_.IsEmpty()) {
 		return;
 	}
 
@@ -78,7 +77,7 @@ void History::Undo() {
 }
 
 void History::Redo() {
-	if (redo_.empty()) {
+	if (redo_.empty() || !stage_.IsEmpty()) {
 		return;
 	}
 
@@ -102,6 +101,18 @@ void History::Clear() {
 	Unstage();
 	ClearUndo();
 	ClearRedo();
+}
+
+bool History::CanUndo() const {
+	return stage_.IsEmpty() && !undo_.empty();
+}
+
+bool History::CanRedo() const {
+	return stage_.IsEmpty() && !redo_.empty();
+}
+
+bool History::CanCommit() const {
+	return !stage_.IsEmpty();
 }
 
 } // namespace undoable

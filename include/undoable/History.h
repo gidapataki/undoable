@@ -33,13 +33,51 @@ private:
 class History {
 public:
 	~History();
+
+	/**
+	 * Reverts pending changes and clears Undo/Redo stacks.
+	 */
 	void Clear();
 
+	/**
+	 * Adds a command to the pending changes.
+	 */
 	void Stage(UniquePtr<Command> command);
+
+	/**
+	 * Reverts pending changes.
+	 */
 	void Unstage();
+
+	/**
+	 * Commits pending changes and clears the Redo stack.
+	 */
 	void Commit();
+
+	/**
+	 * If there are no pending changes then restores the previous commit point.
+	 */
 	void Undo();
+
+	/**
+	 * If there are no pending changes then restores the next commit point.
+	 */
 	void Redo();
+
+	/**
+	 * True, if the Undo stack is not empty, and there are no pending changes.
+	 */
+	bool CanUndo() const;
+
+	/**
+	 * True, if the Redo stack is not empty, and there are no pending changes.
+	 */
+	bool CanRedo() const;
+
+	/**
+	 * True, if there are pending changes.
+	 */
+	bool CanCommit() const;
 
 private:
 	void ClearUndo();

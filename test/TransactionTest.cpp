@@ -60,10 +60,10 @@ struct TickInfo {
 TEST(TransactionTest, Init) {
 	Transaction t;
 
-	EXPECT_EQ(true, t.IsEmpty());
+	EXPECT_TRUE(t.IsEmpty());
 
 	t.Clear();
-	EXPECT_EQ(true, t.IsEmpty());
+	EXPECT_TRUE(t.IsEmpty());
 }
 
 TEST(TransactionTest, Apply) {
@@ -73,12 +73,12 @@ TEST(TransactionTest, Apply) {
 	TickInfo i1;
 	TickInfo i2;
 
-	EXPECT_EQ(true, t.IsEmpty());
+	EXPECT_TRUE(t.IsEmpty());
 
 	i1.AddTo(t);
 	i2.AddTo(t);
 
-	EXPECT_EQ(false, t.IsEmpty());
+	EXPECT_FALSE(t.IsEmpty());
 
 	EXPECT_EQ(1, i1.tick->count);
 	EXPECT_EQ(1, i2.tick->count);
@@ -86,8 +86,8 @@ TEST(TransactionTest, Apply) {
 	EXPECT_EQ(1, i1.tick->order);
 	EXPECT_EQ(2, i2.tick->order);
 
-	EXPECT_EQ(false, i1.tick->reverse);
-	EXPECT_EQ(false, i2.tick->reverse);
+	EXPECT_FALSE(i1.tick->reverse);
+	EXPECT_FALSE(i2.tick->reverse);
 
 	EXPECT_EQ(0, i1.dtor);
 	EXPECT_EQ(0, i2.dtor);
@@ -105,7 +105,7 @@ TEST(TransactionTest, Reverse) {
 	TickInfo i2;
 	TickInfo i3;
 
-	EXPECT_EQ(true, t.IsEmpty());
+	EXPECT_TRUE(t.IsEmpty());
 
 	i1.AddTo(t);
 	i2.AddTo(t);
@@ -115,8 +115,8 @@ TEST(TransactionTest, Reverse) {
 	EXPECT_EQ(1, i2.tick->count);
 	EXPECT_EQ(1, i1.tick->order);
 	EXPECT_EQ(2, i2.tick->order);
-	EXPECT_EQ(false, i1.tick->reverse);
-	EXPECT_EQ(false, i2.tick->reverse);
+	EXPECT_FALSE(i1.tick->reverse);
+	EXPECT_FALSE(i2.tick->reverse);
 
 	t.Reverse();
 	// i2, i1
@@ -125,15 +125,15 @@ TEST(TransactionTest, Reverse) {
 	EXPECT_EQ(2, i2.tick->count);
 	EXPECT_EQ(4, i1.tick->order);
 	EXPECT_EQ(3, i2.tick->order);
-	EXPECT_EQ(true, i1.tick->reverse);
-	EXPECT_EQ(true, i2.tick->reverse);
+	EXPECT_TRUE(i1.tick->reverse);
+	EXPECT_TRUE(i2.tick->reverse);
 
 	i3.AddTo(t);
 	// i2, i1, i3
 
 	EXPECT_EQ(1, i3.tick->count);
 	EXPECT_EQ(5, i3.tick->order);
-	EXPECT_EQ(true, i3.tick->reverse);
+	EXPECT_TRUE(i3.tick->reverse);
 
 	t.Reverse();
 	// i3, i1, i2
@@ -146,9 +146,9 @@ TEST(TransactionTest, Reverse) {
 	EXPECT_EQ(8, i2.tick->order);
 	EXPECT_EQ(6, i3.tick->order);
 
-	EXPECT_EQ(false, i1.tick->reverse);
-	EXPECT_EQ(false, i2.tick->reverse);
-	EXPECT_EQ(false, i3.tick->reverse);
+	EXPECT_FALSE(i1.tick->reverse);
+	EXPECT_FALSE(i2.tick->reverse);
+	EXPECT_FALSE(i3.tick->reverse);
 
 	t.Clear();
 	EXPECT_EQ(1, i3.dtor);
