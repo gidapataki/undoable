@@ -187,7 +187,7 @@ void TestListProperty() {
 }
 
 
-int main() {
+int main2() {
 	TestListProperty();
 	return 0;
 }

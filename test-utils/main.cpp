@@ -1,7 +1,7 @@
 #include "TestUtils.h"
 
 
-int main2() {
+int main() {
 	TestRunner::Get().RunAll();
 	return 0;
 }
