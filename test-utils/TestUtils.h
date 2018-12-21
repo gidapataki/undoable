@@ -57,24 +57,24 @@ public:
 #define EXPECT_FALSE(v) expect_eq(__LINE__, false, v)
 
 
-template<typename Container>
-std::ostream& OutputToStream(std::ostream& stream, const Container& container) {
-	stream << "[";
-	auto it = container.begin(), it_end = container.end();
-	if (it != it_end) {
-		stream << *it;
-		++it;
-	}
-	for (; it != it_end; ++it) {
-		stream << " " << *it;
-	}
-	stream << "]";
-	return stream;
+template<typename T>
+void ToStream(std::ostream& stream, const T& value) {
+	stream << value;
 }
 
 template<typename T>
-std::ostream& operator<<(std::ostream& stream, const std::vector<T>& vec) {
-	return OutputToStream(stream, vec);
+void ToStream(std::ostream& stream, const std::vector<T>& container) {
+	stream << "[";
+	auto it = container.begin(), it_end = container.end();
+	if (it != it_end) {
+		ToStream(stream, *it);
+		++it;
+	}
+	for (; it != it_end; ++it) {
+		stream << ", ";
+		ToStream(stream, *it);
+	}
+	stream << "]";
 }
 
 template<typename Type>
@@ -90,8 +90,12 @@ template<typename U, typename V>
 void expect_eq(int line, const U& expected, const V& actual) {
 	if (!(expected == actual)) {
 		std::cerr << "Error in line " << line << std::endl;
-		std::cerr << "  expected: " << expected << std::endl;
-		std::cerr << "    actual: " << actual << std::endl;
+		std::cerr << "  expected: ";
+		ToStream(std::cerr, expected);
+		std::cerr << std::endl;
+		std::cerr << "    actual: ";
+		ToStream(std::cerr, actual);
+		std::cerr << std::endl;
 	}
 }
 
