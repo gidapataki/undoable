@@ -3,6 +3,8 @@
 
 using namespace undoable;
 
+namespace {
+
 class Store
 	: public PropertyOwner
 {
@@ -39,6 +41,7 @@ public:
 	ValueProperty<std::vector<int>> prop_vec;
 };
 
+} // namespace
 
 TEST(ValuePropertyTest, Init) {
 	Store s;

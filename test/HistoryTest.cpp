@@ -3,8 +3,9 @@
 #include <vector>
 #include <iostream>
 
-
 using namespace undoable;
+
+namespace {
 
 enum Change {
 	kChange,
@@ -14,19 +15,6 @@ enum Change {
 
 using Event = std::pair<int, Change>;
 using Events = std::vector<Event>;
-
-template<>
-void ToStream(std::ostream& stream, const Event& ev) {
-	char sym = '?';
-	switch (ev.second) {
-		case kChange: sym = '>'; break;
-		case kRevert: sym = '<'; break;
-		case kDeleted: sym = '~'; break;
-		default: break;
-	}
-	stream << ev.first << sym;
-}
-
 
 class Tick : public Command {
 public:
@@ -44,6 +32,20 @@ private:
 	Events& events_;
 };
 
+} // namespace
+
+
+template<>
+void ToStream(std::ostream& stream, const Event& ev) {
+	char sym = '?';
+	switch (ev.second) {
+		case kChange: sym = '>'; break;
+		case kRevert: sym = '<'; break;
+		case kDeleted: sym = '~'; break;
+		default: break;
+	}
+	stream << ev.first << sym;
+}
 
 TEST(HistoryTest, StageUnstage) {
 	Events ev;

@@ -1,8 +1,9 @@
 #include "TestUtils.h"
 #include "undoable/History.h"
 
-
 using namespace undoable;
+
+namespace {
 
 int& NextDtor() {
 	static int next = 0;
@@ -56,6 +57,7 @@ struct TickInfo {
 	}
 };
 
+} // namespace
 
 TEST(TransactionTest, Init) {
 	Transaction t;

@@ -87,6 +87,11 @@ private:
 	static ListNode& Prev(ListNode& node);
 	static ListNode* Next(ListNode* node);
 	static ListNode* Prev(ListNode* node);
+
+	static const ListNode& Next(const ListNode& node);
+	static const ListNode& Prev(const ListNode& node);
+	static const ListNode* Next(const ListNode* node);
+	static const ListNode* Prev(const ListNode* node);
 };
 
 
@@ -194,6 +199,7 @@ protected:
 	ListProperty& operator=(ListProperty&&) = delete;
 
 	ListNode& Head();
+	const ListNode& Head() const;
 };
 
 } // namespace

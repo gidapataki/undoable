@@ -46,6 +46,26 @@ ListNode<Type, Tag>* ListNode<Type, Tag>::Prev(ListNode* node) {
 	return static_cast<ListNode*>(node->prev_);
 }
 
+template<typename Type, typename Tag>
+const ListNode<Type, Tag>& ListNode<Type, Tag>::Next(const ListNode& node) {
+	return *static_cast<const ListNode*>(node.next_);
+}
+
+template<typename Type, typename Tag>
+const ListNode<Type, Tag>& ListNode<Type, Tag>::Prev(const ListNode& node) {
+	return *static_cast<const ListNode*>(node.prev_);
+}
+
+template<typename Type, typename Tag>
+const ListNode<Type, Tag>* ListNode<Type, Tag>::Next(const ListNode* node) {
+	return static_cast<const ListNode*>(node->next_);
+}
+
+template<typename Type, typename Tag>
+const ListNode<Type, Tag>* ListNode<Type, Tag>::Prev(const ListNode* node) {
+	return static_cast<const ListNode*>(node->prev_);
+}
+
 
 // ListIterator
 
@@ -62,21 +82,21 @@ ListIterator<Type, Tag>& ListIterator<Type, Tag>::operator++() {
 
 template<typename Type, typename Tag>
 ListIterator<Type, Tag>& ListIterator<Type, Tag>::operator--() {
-	node_ = node_->prev_;
+	node_ = ListNode::Prev(node_);
 	return *this;
 }
 
 template<typename Type, typename Tag>
 ListIterator<Type, Tag> ListIterator<Type, Tag>::operator++(int) {
 	ListIterator it = *this;
-	node_ = node_->next_;
+	node_ = ListNode::Next(node_);
 	return it;
 }
 
 template<typename Type, typename Tag>
 ListIterator<Type, Tag> ListIterator<Type, Tag>::operator--(int) {
 	ListIterator it = *this;
-	node_ = node_->prev_;
+	node_ = ListNode::Prev(node_);
 	return it;
 }
 
@@ -119,20 +139,22 @@ void ListProperty<Type, Tag>::OnReset() {
 
 template<typename Type, typename Tag>
 void ListProperty<Type, Tag>::UnlinkFront() {
-	Next(Head()).Unlink();
+	ListNode::Next(Head()).Unlink();
 }
 
 template<typename Type, typename Tag>
 void ListProperty<Type, Tag>::UnlinkBack() {
-	Prev(Head()).Unlink();
+	ListNode::Prev(Head()).Unlink();
 }
 
 template<typename Type, typename Tag>
 void ListProperty<Type, Tag>::LinkAt(iterator pos, ListNode& u) {
-	assert((pos.node_ == &head_ || pos.node_->parent == this) &&
+	assert((pos.node_ == &Head() || pos.node_->parent_ == this) &&
 		"Invalid iterator");
-	auto cmd = MakeUnique<typename ListNode::Relink>(&u, pos.node_, this);
-	owner_->ApplyPropertyChange(std::move(cmd));
+	if (pos.node_ != &u) {
+		auto cmd = MakeUnique<typename ListNode::Relink>(&u, pos.node_, this);
+		owner_->ApplyPropertyChange(std::move(cmd));
+	}
 }
 
 template<typename Type, typename Tag>
@@ -150,27 +172,27 @@ void ListProperty<Type, Tag>::LinkBack(ListNode& u) {
 
 template<typename Type, typename Tag>
 bool ListProperty<Type, Tag>::IsEmpty() const {
-	return !head_.IsLinked();
+	return !Head().IsLinked();
 }
 
 template<typename Type, typename Tag>
 Type& ListProperty<Type, Tag>::Front() {
-	return *Next(head_).Object();
+	return *ListNode::Next(Head()).Object();
 }
 
 template<typename Type, typename Tag>
 Type& ListProperty<Type, Tag>::Back() {
-	return *Prev(head_).Object();
+	return *ListNode::Prev(Head()).Object();
 }
 
 template<typename Type, typename Tag>
 const Type& ListProperty<Type, Tag>::Front() const {
-	return *Next(head_).Object();
+	return *ListNode::Next(Head()).Object();
 }
 
 template<typename Type, typename Tag>
 const Type& ListProperty<Type, Tag>::Back() const {
-	return *Prev(head_).Object();
+	return *ListNode::Prev(Head()).Object();
 }
 
 template<typename Type, typename Tag>
@@ -185,7 +207,7 @@ typename ListProperty<Type, Tag>::iterator ListProperty<Type, Tag>::end() {
 
 template<typename Type, typename Tag>
 typename ListProperty<Type, Tag>::const_iterator ListProperty<Type, Tag>::begin() const {
-	return const_iterator(&Next(Head()));
+	return const_iterator(&ListNode::Next(Head()));
 }
 
 template<typename Type, typename Tag>
@@ -195,7 +217,7 @@ typename ListProperty<Type, Tag>::const_iterator ListProperty<Type, Tag>::end() 
 
 template<typename Type, typename Tag>
 typename ListProperty<Type, Tag>::const_iterator ListProperty<Type, Tag>::cbegin() const {
-	return const_iterator(&Next(Head()));
+	return const_iterator(&ListNode::Next(Head()));
 }
 
 template<typename Type, typename Tag>
@@ -205,7 +227,7 @@ typename ListProperty<Type, Tag>::const_iterator ListProperty<Type, Tag>::cend()
 
 template<typename Type, typename Tag>
 typename ListProperty<Type, Tag>::iterator ListProperty<Type, Tag>::Remove(iterator it) {
-	if (it.node_ != &head_) {
+	if (it.node_ != &Head()) {
 		assert(it.node_->parent_ == this && "Node is in a different list");
 		auto next = it;
 		++next;
@@ -232,6 +254,7 @@ std::size_t ListProperty<Type, Tag>::Count(const ListNode& u) const {
 
 template<typename Type, typename Tag>
 typename ListProperty<Type, Tag>::iterator ListProperty<Type, Tag>::Find(const ListNode& u) {
+	// TODO: this could be 0(1)
 	for (auto it = begin(), it_end = end(); it != it_end; ++it) {
 		if (&*it == &u) {
 			return it;
@@ -242,6 +265,7 @@ typename ListProperty<Type, Tag>::iterator ListProperty<Type, Tag>::Find(const L
 
 template<typename Type, typename Tag>
 typename ListProperty<Type, Tag>::const_iterator ListProperty<Type, Tag>::Find(const ListNode& u) const {
+	// TODO: this could be 0(1)
 	for (auto it = begin(), it_end = end(); it != it_end; ++it) {
 		if (&*it == &u) {
 			return it;
@@ -259,6 +283,11 @@ void ListProperty<Type, Tag>::Clear() {
 template<typename Type, typename Tag>
 ListNode<Type, Tag>& ListProperty<Type, Tag>::Head() {
 	return static_cast<ListNode&>(head_);
+}
+
+template<typename Type, typename Tag>
+const ListNode<Type, Tag>& ListProperty<Type, Tag>::Head() const {
+	return static_cast<const ListNode&>(head_);
 }
 
 
