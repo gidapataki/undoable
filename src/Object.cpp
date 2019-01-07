@@ -27,6 +27,7 @@ bool ObjectBase::InheritanceOrderCheck() const {
 	return next_object_ == this && prev_object_ == this;
 }
 
+
 // Object
 
 Object::~Object() {
@@ -38,16 +39,20 @@ Object::~Object() {
 
 void Object::ApplyPropertyChange(UniquePtr<Command> command) {
 	assert(status_ != Status::kOnCreate &&
-		"Cannot change property in OnCreate()");
+		"Cannot change properties in OnCreate()");
 	assert(status_ != Status::kOnDestroy &&
-		"Cannot change property in OnDestroy()");
+		"Cannot change properties in OnDestroy()");
 	assert(status_ != Status::kDestroyed &&
-		"Cannot change property on a destroyed object");
+		"Cannot change properties on a destroyed object");
+	assert(!on_change_ &&
+		"Cannot change properties via OnPropertyChange()");
 
-	if (history_ && status_ == Status::kCreated) {
-		history_->Stage(std::move(command));
-	} else if (!history_) {
-		command->Apply(false);
+	if (!on_change_) {
+		if (history_ && status_ == Status::kCreated) {
+			history_->Stage(std::move(command));
+		} else if (!history_) {
+			command->Apply(false);
+		}
 	}
 }
 
@@ -98,8 +103,6 @@ bool Object::IsCreated() const {
 bool Object::IsDestroyed() const {
 	return status_ == Status::kDestroyed;
 }
-
-
 
 
 // Object::StatusChange

@@ -64,13 +64,13 @@ void ListNodeBase::Relink::Apply(bool reverse) {
 
 	if (parent_) {
 		// The old parent is notified first
-		parent_->owner_->OnPropertyChange(parent_);
+		parent_->NotifyOwner();
 	}
 	if (other_parent && parent_ != other_parent) {
 		// The current parent is notified second,
 		// so the node disappears first and then reappears.
 		// If the same list is used, then we only notify once.
-		other_parent->owner_->OnPropertyChange(other_parent);
+		other_parent->NotifyOwner();
 	}
 }
 

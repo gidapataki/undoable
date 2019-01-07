@@ -115,6 +115,7 @@ public:
 			return;
 		}
 		events.push_back(MakeChangeEvent(property));
+		// value.Set(value.Get() + 1);
 	}
 
 	ValueProperty<int> value {this};

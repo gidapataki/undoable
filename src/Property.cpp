@@ -12,6 +12,13 @@ Property::Property(PropertyOwner* owner)
 	owner->RegisterProperty(this);
 }
 
+void Property::NotifyOwner() {
+	auto old_value = owner_->on_change_;
+	owner_->on_change_ = true;
+	owner_->OnPropertyChange(this);
+	owner_->on_change_ = old_value;
+}
+
 
 // PropertyOwner
 

@@ -321,7 +321,7 @@ void ListProperty<Type, Tag>::ReplaceAll::Apply(bool reverse) {
 		}
 	}
 
-	list_->owner_->OnPropertyChange(list_);
+	list_->NotifyOwner();
 }
 
 } // namespace

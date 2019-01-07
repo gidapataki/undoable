@@ -14,6 +14,7 @@ public:
 	virtual void OnReset() = 0;
 
 protected:
+	void NotifyOwner();
 	PropertyOwner* owner_ = nullptr;
 
 private:
@@ -39,6 +40,7 @@ protected:
 
 	Property* first_property_ = nullptr;
 	Property* last_property_ = nullptr;
+	bool on_change_ = false;
 };
 
 } // namespace undoable
