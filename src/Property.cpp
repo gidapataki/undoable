@@ -25,7 +25,7 @@ void PropertyOwner::RegisterProperty(Property* property) {
 	}
 }
 
-void PropertyOwner::ResetAllProperty() {
+void PropertyOwner::ResetAllProperties() {
 	for (auto* p = first_property_; p; p = p->next_property_) {
 		p->OnReset();
 	}

@@ -1,7 +1,6 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <initializer_list>
 #include <functional>
 
 
@@ -75,15 +74,6 @@ void ToStream(std::ostream& stream, const std::vector<T>& container) {
 		ToStream(stream, *it);
 	}
 	stream << "]";
-}
-
-template<typename Type>
-std::vector<Type> MakeVector(std::initializer_list<Type> ls) {
-	std::vector<Type> vec;
-	for (auto& item : ls) {
-		vec.push_back(item);
-	}
-	return vec;
 }
 
 template<typename U, typename V>

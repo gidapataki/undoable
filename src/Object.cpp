@@ -30,52 +30,51 @@ bool ObjectBase::InheritanceOrderCheck() const {
 // Object
 
 Object::~Object() {
-	assert(status_ != Status::kConstructed &&
+	assert(status_ != Status::kConstructing &&
 		"Object was not created through Factory");
-	assert(status_ == Status::kDestructed &&
+	assert(status_ == Status::kDestructing &&
 		"Object was not destructed through Destroy()");
 }
 
 void Object::ApplyPropertyChange(UniquePtr<Command> command) {
-	if (history_) {
-		if (status_ == Status::kCreated) {
-			history_->Stage(std::move(command));
-		} else {
-			assert(status_ != Status::kOnCreate &&
-				"Cannot change property in OnCreate()");
-			assert(status_ != Status::kOnDestroy &&
-				"Cannot change property in OnDestroy()");
-			assert(status_ != Status::kDestroyed &&
-				"Cannot change property on a destroyed object");
-		}
-	} else {
+	assert(status_ != Status::kOnCreate &&
+		"Cannot change property in OnCreate()");
+	assert(status_ != Status::kOnDestroy &&
+		"Cannot change property in OnDestroy()");
+	assert(status_ != Status::kDestroyed &&
+		"Cannot change property on a destroyed object");
+
+	if (history_ && status_ == Status::kCreated) {
+		history_->Stage(std::move(command));
+	} else if (!history_) {
 		command->Apply(false);
 	}
 }
 
 void Object::DestroyMembers() {
-	ResetAllProperty();
+	ResetAllProperties();
 	UnlinkAllNodes();
 }
 
 void Object::Destroy() {
-	if (status_ == Status::kCreated) {
+	assert(history_ && "History is not set");
+	assert(status_ != Status::kOnCreate &&
+		"Cannot destroy in OnCreate()");
+	assert(status_ != Status::kOnDestroy &&
+		"Cannot destroy in OnDestroy()");
+	assert(status_ != Status::kDestroyed &&
+		"Cannot destroy a destroyed object");
+
+	if (history_ && status_ == Status::kCreated) {
 		DestroyMembers();
 		history_->Stage(MakeUnique<StatusChange>(this, false));
-	} else {
-		assert(status_ != Status::kOnCreate &&
-			"Cannot destroy in OnCreate()");
-		assert(status_ != Status::kOnDestroy &&
-			"Cannot destroy in OnDestroy()");
-		assert(status_ != Status::kDestroyed &&
-			"Cannot destroy a destroyed object");
 	}
 }
 
 void Object::Destruct(Object* obj) {
 	// Note: destructor can freely change properties just like the ctor
 	obj->history_ = nullptr;
-	obj->status_ = Status::kDestructed;
+	obj->status_ = Status::kDestructing;
 	delete obj;
 }
 
@@ -83,6 +82,24 @@ void Object::Init(History* history) {
 	history_ = history;
 	history_->Stage(MakeUnique<StatusChange>(this, true));
 }
+
+bool Object::IsConstructing() const {
+	return status_ == Status::kConstructing;
+}
+
+bool Object::IsDestructing() const {
+	return status_ == Status::kDestructing;
+}
+
+bool Object::IsCreated() const {
+	return status_ == Status::kCreated;
+}
+
+bool Object::IsDestroyed() const {
+	return status_ == Status::kDestroyed;
+}
+
+
 
 
 // Object::StatusChange
@@ -112,6 +129,5 @@ void Object::StatusChange::Apply(bool reverse) {
 		obj_->status_ = Status::kDestroyed;
 	}
 }
-
 
 } // namespace undoable

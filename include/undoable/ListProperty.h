@@ -8,8 +8,6 @@
 
 namespace undoable {
 
-struct tag_Unlinker; // fixme remmve
-
 class ListNodeBase;
 class ListNodeOwner;
 class ListPropertyBase;

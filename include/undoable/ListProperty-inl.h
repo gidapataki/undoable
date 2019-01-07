@@ -1,9 +1,8 @@
 #pragma once
 #include <cassert>
 
-#include <iostream>
-namespace undoable {
 
+namespace undoable {
 
 // ListNode
 
@@ -276,8 +275,10 @@ typename ListProperty<Type, Tag>::const_iterator ListProperty<Type, Tag>::Find(c
 
 template<typename Type, typename Tag>
 void ListProperty<Type, Tag>::Clear() {
-	auto cmd = MakeUnique<ReplaceAll>(this);
-	owner_->ApplyPropertyChange(std::move(cmd));
+	if (!IsEmpty()) {
+		auto cmd = MakeUnique<ReplaceAll>(this);
+		owner_->ApplyPropertyChange(std::move(cmd));
+	}
 }
 
 template<typename Type, typename Tag>

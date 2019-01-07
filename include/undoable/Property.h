@@ -7,7 +7,6 @@ namespace undoable {
 class Property;
 class PropertyOwner;
 
-
 class Property {
 public:
 	Property(PropertyOwner* owner);
@@ -32,7 +31,7 @@ public:
 	/**
 	 * Calls OnReset() on all properties.
 	 */
-	void ResetAllProperty();
+	void ResetAllProperties();
 
 protected:
 	friend class Property;

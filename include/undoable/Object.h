@@ -7,6 +7,10 @@
 
 namespace undoable {
 
+class ObjectBase;
+class Object;
+
+
 class ObjectBase {
 public:
 	ObjectBase();
@@ -32,8 +36,15 @@ public:
 	Object() = default;
 	~Object();
 
+	bool IsConstructing() const;
+	bool IsDestructing() const;
+	bool IsCreated() const;
+	bool IsDestroyed() const;
 	void Destroy();
 
+	/**
+	 * Override these functions to handle Create/Destroy/PropertyChange.
+	 */
 	virtual void OnCreate() {}
 	virtual void OnDestroy() {}
 	virtual void OnPropertyChange(Property* property) override {}
@@ -42,12 +53,12 @@ private:
 	friend class Factory;
 
 	enum class Status {
-		kConstructed,
+		kConstructing,
 		kOnCreate,
 		kCreated,
 		kOnDestroy,
 		kDestroyed,
-		kDestructed,
+		kDestructing,
 	};
 
 	class StatusChange : public Command {
@@ -68,7 +79,7 @@ private:
 	virtual void ApplyPropertyChange(UniquePtr<Command> command) override;
 
 	History* history_ = nullptr;
-	Status status_ = Status::kConstructed;
+	Status status_ = Status::kConstructing;
 };
 
 } // namespace undoable

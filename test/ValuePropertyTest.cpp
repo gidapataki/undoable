@@ -49,7 +49,7 @@ TEST(ValuePropertyTest, Init) {
 	EXPECT_EQ(0, s.prop_int1.Get());
 	EXPECT_EQ(3, s.prop_int2.Get());
 	EXPECT_EQ("", s.prop_str.Get());
-	EXPECT_EQ(MakeVector<int>({5, 7}), s.prop_vec.Get());
+	EXPECT_EQ(std::vector<int>({5, 7}), s.prop_vec.Get());
 }
 
 TEST(ValuePropertyTest, Changes) {

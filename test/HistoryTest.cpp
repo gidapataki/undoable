@@ -52,18 +52,18 @@ TEST(HistoryTest, StageUnstage) {
 	History h;
 
 	h.Stage(MakeUnique<Tick>(1, ev));
-	EXPECT_EQ(MakeVector<Event>({{1, kChange}}), ev);
+	EXPECT_EQ(Events({{1, kChange}}), ev);
 	EXPECT_TRUE(h.CanCommit());
 
 	h.Unstage();
-	EXPECT_EQ(MakeVector<Event>({{1, kChange}, {1, kRevert}, {1, kDeleted}}), ev);
+	EXPECT_EQ(Events({{1, kChange}, {1, kRevert}, {1, kDeleted}}), ev);
 	EXPECT_FALSE(h.CanCommit());
 	EXPECT_FALSE(h.CanUndo());
 	EXPECT_FALSE(h.CanRedo());
 
 	ev.clear();
 	h.Stage(MakeUnique<Tick>(2, ev));
-	EXPECT_EQ(MakeVector<Event>({{2, kChange}}), ev);
+	EXPECT_EQ(Events({{2, kChange}}), ev);
 }
 
 
@@ -74,27 +74,27 @@ TEST(HistoryTest, UndoRedo) {
 	h.Stage(MakeUnique<Tick>(1, ev));
 	h.Stage(MakeUnique<Tick>(2, ev));
 	h.Commit();
-	EXPECT_EQ(MakeVector<Event>({{1, kChange}, {2, kChange}}), ev);
+	EXPECT_EQ(Events({{1, kChange}, {2, kChange}}), ev);
 	EXPECT_FALSE(h.CanCommit());
 	EXPECT_TRUE(h.CanUndo());
 	EXPECT_FALSE(h.CanRedo());
 
 	h.Unstage();
-	EXPECT_EQ(MakeVector<Event>({{1, kChange}, {2, kChange}}), ev);
+	EXPECT_EQ(Events({{1, kChange}, {2, kChange}}), ev);
 
 	ev.clear();
 	h.Undo();
-	EXPECT_EQ(MakeVector<Event>({{2, kRevert}, {1, kRevert}}), ev);
+	EXPECT_EQ(Events({{2, kRevert}, {1, kRevert}}), ev);
 	EXPECT_FALSE(h.CanCommit());
 	EXPECT_FALSE(h.CanUndo());
 	EXPECT_TRUE(h.CanRedo());
 
 	h.Undo();
-	EXPECT_EQ(MakeVector<Event>({{2, kRevert}, {1, kRevert}}), ev);
+	EXPECT_EQ(Events({{2, kRevert}, {1, kRevert}}), ev);
 
 	ev.clear();
 	h.Redo();
-	EXPECT_EQ(MakeVector<Event>({{1, kChange}, {2, kChange}}), ev);
+	EXPECT_EQ(Events({{1, kChange}, {2, kChange}}), ev);
 	EXPECT_FALSE(h.CanCommit());
 	EXPECT_TRUE(h.CanUndo());
 	EXPECT_FALSE(h.CanRedo());
@@ -109,19 +109,19 @@ TEST(HistoryTest, UndoRedoMore) {
 	h.Commit();
 	h.Stage(MakeUnique<Tick>(2, ev));
 	h.Commit();
-	EXPECT_EQ(MakeVector<Event>({{1, kChange}, {2, kChange}}), ev);
+	EXPECT_EQ(Events({{1, kChange}, {2, kChange}}), ev);
 	EXPECT_TRUE(h.CanUndo());
 	EXPECT_FALSE(h.CanRedo());
 
 	ev.clear();
 	h.Undo();
-	EXPECT_EQ(MakeVector<Event>({{2, kRevert}}), ev);
+	EXPECT_EQ(Events({{2, kRevert}}), ev);
 	EXPECT_TRUE(h.CanUndo());
 	EXPECT_TRUE(h.CanRedo());
 
 	ev.clear();
 	h.Undo();
-	EXPECT_EQ(MakeVector<Event>({{1, kRevert}}), ev);
+	EXPECT_EQ(Events({{1, kRevert}}), ev);
 	EXPECT_FALSE(h.CanUndo());
 	EXPECT_TRUE(h.CanRedo());
 
@@ -129,7 +129,7 @@ TEST(HistoryTest, UndoRedoMore) {
 	h.Redo();
 	EXPECT_TRUE(h.CanRedo());
 	h.Redo();
-	EXPECT_EQ(MakeVector<Event>({{1, kChange}, {2, kChange}}), ev);
+	EXPECT_EQ(Events({{1, kChange}, {2, kChange}}), ev);
 
 	EXPECT_TRUE(h.CanUndo());
 	EXPECT_FALSE(h.CanRedo());
@@ -142,7 +142,7 @@ TEST(HistoryTest, CommitClearsRedo) {
 	h.Stage(MakeUnique<Tick>(1, ev));
 	h.Commit();
 	h.Undo();
-	EXPECT_EQ(MakeVector<Event>({{1, kChange}, {1, kRevert}}), ev);
+	EXPECT_EQ(Events({{1, kChange}, {1, kRevert}}), ev);
 	EXPECT_TRUE(h.CanRedo());
 	EXPECT_FALSE(h.CanCommit());
 
@@ -151,10 +151,10 @@ TEST(HistoryTest, CommitClearsRedo) {
 	EXPECT_FALSE(h.CanUndo());
 	EXPECT_FALSE(h.CanRedo());
 	EXPECT_TRUE(h.CanCommit());
-	EXPECT_EQ(MakeVector<Event>({{2, kChange}}), ev);
+	EXPECT_EQ(Events({{2, kChange}}), ev);
 
 	h.Unstage();
-	EXPECT_EQ(MakeVector<Event>({{2, kChange}, {2, kRevert}, {2, kDeleted}}), ev);
+	EXPECT_EQ(Events({{2, kChange}, {2, kRevert}, {2, kDeleted}}), ev);
 	EXPECT_FALSE(h.CanUndo());
 	EXPECT_TRUE(h.CanRedo());
 	EXPECT_FALSE(h.CanCommit());
@@ -164,12 +164,12 @@ TEST(HistoryTest, CommitClearsRedo) {
 	h.Commit();
 	EXPECT_TRUE(h.CanUndo());
 	EXPECT_FALSE(h.CanRedo());
-	EXPECT_EQ(MakeVector<Event>({{3, kChange}, {1, kDeleted}}), ev);
+	EXPECT_EQ(Events({{3, kChange}, {1, kDeleted}}), ev);
 
 	h.Undo();
 	EXPECT_FALSE(h.CanUndo());
 	EXPECT_TRUE(h.CanRedo());
-	EXPECT_EQ(MakeVector<Event>({{3, kChange}, {1, kDeleted}, {3, kRevert}}), ev);
+	EXPECT_EQ(Events({{3, kChange}, {1, kDeleted}, {3, kRevert}}), ev);
 }
 
 TEST(HistoryTest, Clear) {
@@ -177,31 +177,31 @@ TEST(HistoryTest, Clear) {
 	History h;
 
 	h.Stage(MakeUnique<Tick>(1, ev));
-	EXPECT_EQ(MakeVector<Event>({{1, kChange}}), ev);
+	EXPECT_EQ(Events({{1, kChange}}), ev);
 	EXPECT_TRUE(h.CanCommit());
 
 	h.Clear();
-	EXPECT_EQ(MakeVector<Event>({{1, kChange}, {1, kRevert}, {1, kDeleted}}), ev);
+	EXPECT_EQ(Events({{1, kChange}, {1, kRevert}, {1, kDeleted}}), ev);
 	EXPECT_FALSE(h.CanCommit());
 
 	ev.clear();
 	h.Stage(MakeUnique<Tick>(2, ev));
 	h.Commit();
-	EXPECT_EQ(MakeVector<Event>({{2, kChange}}), ev);
+	EXPECT_EQ(Events({{2, kChange}}), ev);
 	EXPECT_TRUE(h.CanUndo());
 
 	h.Clear();
-	EXPECT_EQ(MakeVector<Event>({{2, kChange}, {2, kDeleted}}), ev);
+	EXPECT_EQ(Events({{2, kChange}, {2, kDeleted}}), ev);
 	EXPECT_FALSE(h.CanUndo());
 
 	ev.clear();
 	h.Stage(MakeUnique<Tick>(3, ev));
 	h.Commit();
 	h.Undo();
-	EXPECT_EQ(MakeVector<Event>({{3, kChange}, {3, kRevert}}), ev);
+	EXPECT_EQ(Events({{3, kChange}, {3, kRevert}}), ev);
 	EXPECT_TRUE(h.CanRedo());
 
 	h.Clear();
-	EXPECT_EQ(MakeVector<Event>({{3, kChange}, {3, kRevert}, {3, kDeleted}}), ev);
+	EXPECT_EQ(Events({{3, kChange}, {3, kRevert}, {3, kDeleted}}), ev);
 	EXPECT_FALSE(h.CanRedo());
 }
