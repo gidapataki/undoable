@@ -57,8 +57,10 @@ void Object::ApplyPropertyChange(UniquePtr<Command> command) {
 }
 
 void Object::DestroyMembers() {
-	ResetAllProperties();
+	// Note: this is a bit unlike how a destructor would work,
+	// however this order trivially breaks owning list cycles.
 	UnlinkAllNodes();
+	ResetAllProperties();
 }
 
 void Object::Destroy() {

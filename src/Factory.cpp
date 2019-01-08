@@ -5,7 +5,7 @@ namespace undoable {
 
 Factory::~Factory() {
 	history_.Clear();
-	for (auto* p = NextObject(); p; p = NextObject()) {
+	while (auto* p = NextObject()) {
 		Object::Destruct(p);
 	}
 }

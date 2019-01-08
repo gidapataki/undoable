@@ -2,6 +2,7 @@
 #include "undoable/Object.h"
 #include "undoable/Factory.h"
 #include "undoable/ValueProperty.h"
+#include "undoable/ListProperty.h"
 #include <vector>
 
 using namespace undoable;
@@ -184,6 +185,7 @@ TEST(ObjectTest, Change) {
 	Events evs;
 	auto factory = MakeUnique<Factory>();
 	auto& f = *factory;
+	auto& h = f.GetHistory();
 
 	auto& e1 = f.Create<Element>(evs);
 	EXPECT_EQ(Events{MakeCreateEvent(&e1)}, evs);
@@ -204,6 +206,21 @@ TEST(ObjectTest, Change) {
 	f.GetHistory().Commit();
 	EXPECT_TRUE(evs.empty());
 
+	evs.clear();
+	h.Undo();
+	h.Redo();
+	EXPECT_EQ((Events{
+		MakeChangeEvent(&e1.children),
+		MakeDestroyEvent(&e2),
+		MakeChangeEvent(&e1.value),
+		MakeDestroyEvent(&e1),
+		MakeCreateEvent(&e1),
+		MakeChangeEvent(&e1.value),
+		MakeCreateEvent(&e2),
+		MakeChangeEvent(&e1.children),
+	}), evs);
+
+	evs.clear();
 	factory.reset();
 	EXPECT_EQ((Events{
 		MakeDestructEvent(&e1),
@@ -273,7 +290,7 @@ TEST(ObjectTest, UndoRedo) {
 TEST(ObjectTest, DestroyMembers) {
 	Events evs;
 	Factory f;
-
+	auto& h = f.GetHistory();
 	auto& e1 = f.Create<Element>(evs);
 	auto& e2 = f.Create<Element>(evs);
 
@@ -283,14 +300,22 @@ TEST(ObjectTest, DestroyMembers) {
 	e1.children.LinkBack(e2);
 	EXPECT_EQ(4, evs.size());
 
+	h.Commit();
+	e1.children.Clear();
+	h.Commit();
+	h.Undo();
+
+	e2.children.LinkBack(e1);
+
 	evs.clear();
 	e1.Destroy();
 	EXPECT_EQ((Events{
+		MakeChangeEvent(&e2.children),
 		MakeChangeEvent(&e1.children),
-		MakeDestroyEvent(&e1)
+		MakeDestroyEvent(&e1),
 	}), evs);
 
-	f.GetHistory().Commit();
+	h.Commit();
 }
 
 TEST(ObjectTest, StatusCheck) {
@@ -319,6 +344,7 @@ TEST(ObjectTest, DestructInaccessible) {
 	h.Commit();
 	EXPECT_TRUE(evs.empty());
 
+	evs.clear();
 	auto& e2 = f.Create<Element>(evs);
 	h.Unstage();
 	EXPECT_EQ((Events{

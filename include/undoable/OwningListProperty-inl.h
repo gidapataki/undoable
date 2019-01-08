@@ -6,7 +6,9 @@ namespace undoable {
 template<typename Type, typename Tag>
 OwningListProperty<Type, Tag>::OwningListProperty(PropertyOwner* owner)
 	: ListProperty<Type, Tag>(owner)
-{}
+{
+	static_assert(std::is_base_of<Object, Type>::value, "Invalid type");
+}
 
 template<typename Type, typename Tag>
 void OwningListProperty<Type, Tag>::OnReset() {

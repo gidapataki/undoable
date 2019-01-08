@@ -18,6 +18,8 @@ public:
 
 using XList = ListProperty<Element, struct tag0>;
 using YList = ListProperty<Element, struct tag1>;
+using Elements = std::vector<Element*>;
+using ConstElements = std::vector<const Element*>;
 
 class Container
 	: public Object
@@ -33,8 +35,8 @@ public:
 };
 
 template<typename Tag>
-std::vector<Element*> ToVector(ListProperty<Element, Tag>& list) {
-	std::vector<Element*> vec;
+Elements ToVector(ListProperty<Element, Tag>& list) {
+	Elements vec;
 	for (auto& e : list) {
 		vec.push_back(&e);
 	}
@@ -302,9 +304,6 @@ TEST(ListPropertyTest, MultipleContainment) {
 }
 
 TEST(ListPropertyTest, RangeIterator) {
-	using Vector = std::vector<Element*>;
-	using ConstVector = std::vector<const Element*>;
-
 	Factory f;
 	auto& c = f.Create<Container>();
 	auto& e1 = f.Create<Element>();
@@ -318,21 +317,19 @@ TEST(ListPropertyTest, RangeIterator) {
 	list.LinkBack(e3);
 	list.LinkFront(e4);
 
-	Vector vec0;
-	ConstVector vec1;
+	Elements vec0;
+	ConstElements vec1;
 
 	for (auto& e : list) {
 		vec0.push_back(&e);
 		vec1.push_back(&e);
 	}
 
-	EXPECT_EQ(Vector({&e4, &e2, &e1, &e3}), vec0);
-	EXPECT_EQ(ConstVector({&e4, &e2, &e1, &e3}), vec1);
+	EXPECT_EQ(Elements({&e4, &e2, &e1, &e3}), vec0);
+	EXPECT_EQ(ConstElements({&e4, &e2, &e1, &e3}), vec1);
 }
 
 TEST(ListPropertyTest, Insertion) {
-	using Vector = std::vector<Element*>;
-
 	Factory f;
 	auto& c = f.Create<Container>();
 	auto& e1 = f.Create<Element>();
@@ -346,18 +343,18 @@ TEST(ListPropertyTest, Insertion) {
 	list.LinkBack(e1);
 	list.LinkBack(e2);
 	list.LinkBack(e3);
-	EXPECT_EQ(Vector({ &e1, &e2, &e3 }), ToVector(list));
+	EXPECT_EQ(Elements({ &e1, &e2, &e3 }), ToVector(list));
 
 	it = list.begin();
 	it2 = list.LinkAt(it, e4);
-	EXPECT_EQ(Vector({ &e4, &e1, &e2, &e3 }), ToVector(list));
+	EXPECT_EQ(Elements({ &e4, &e1, &e2, &e3 }), ToVector(list));
 	EXPECT_EQ(&e4, &*it2);
 
 	it = list.begin();
 	EXPECT_EQ(&e4, &*it);
 
 	it2 = list.LinkAt(it, e4);
-	EXPECT_EQ(Vector({ &e4, &e1, &e2, &e3 }), ToVector(list));
+	EXPECT_EQ(Elements({ &e4, &e1, &e2, &e3 }), ToVector(list));
 	EXPECT_EQ(&e4, &*it2);
 
 	++it;
@@ -365,27 +362,27 @@ TEST(ListPropertyTest, Insertion) {
 	EXPECT_EQ(&e4, &*it2);
 
 	it2 = list.LinkAt(it, e4);
-	EXPECT_EQ(Vector({ &e4, &e1, &e2, &e3 }), ToVector(list));
+	EXPECT_EQ(Elements({ &e4, &e1, &e2, &e3 }), ToVector(list));
 	EXPECT_EQ(&e4, &*it2);
 
 	++it;
 	EXPECT_EQ(&e2, &*it);
 
 	it2 = list.LinkAt(it, e4);
-	EXPECT_EQ(Vector({ &e1, &e4, &e2, &e3 }), ToVector(list));
+	EXPECT_EQ(Elements({ &e1, &e4, &e2, &e3 }), ToVector(list));
 	EXPECT_EQ(&e4, &*it2);
 
 	++it;
 	EXPECT_EQ(&e3, &*it);
 
 	list.LinkAt(it, e4);
-	EXPECT_EQ(Vector({ &e1, &e2, &e4, &e3 }), ToVector(list));
+	EXPECT_EQ(Elements({ &e1, &e2, &e4, &e3 }), ToVector(list));
 
 	++it;
 	EXPECT_EQ(list.end(), it);
 
 	it2 = list.LinkAt(it, e2);
-	EXPECT_EQ(Vector({ &e1, &e4, &e3, &e2 }), ToVector(list));
+	EXPECT_EQ(Elements({ &e1, &e4, &e3, &e2 }), ToVector(list));
 	EXPECT_EQ(&e2, &*it2);
 }
 
@@ -429,8 +426,6 @@ TEST(ListPropertyTest, Find) {
 }
 
 TEST(ListPropertyTest, Destroy) {
-	using Vector = std::vector<Element*>;
-
 	Factory f;
 	auto& c = f.Create<Container>();
 	auto& e1 = f.Create<Element>();
@@ -439,13 +434,48 @@ TEST(ListPropertyTest, Destroy) {
 
 	list.LinkBack(e1);
 	list.LinkBack(e2);
-	EXPECT_EQ(Vector({&e1, &e2}), ToVector(list));
+	EXPECT_EQ(Elements({&e1, &e2}), ToVector(list));
 
 	e2.Destroy();
-	EXPECT_EQ(Vector({&e1}), ToVector(list));
+	EXPECT_EQ(Elements({&e1}), ToVector(list));
 }
 
 
 TEST(ListPropertyTest, UndoRedo) {
-	// fixme -
+	Factory f;
+	auto& h = f.GetHistory();
+	auto& c = f.Create<Container>();
+	auto& e1 = f.Create<Element>();
+	auto& e2 = f.Create<Element>();
+	auto& e3 = f.Create<Element>();
+	auto& e4 = f.Create<Element>();
+	auto& list = c.ls0;
+	auto& list2 = c.ls1;
+
+	list.LinkBack(e1);
+	list.LinkFront(e2);
+	list.LinkAt(list.Find(e1), e3);
+	h.Commit();
+	EXPECT_EQ(Elements({&e2, &e3, &e1}), ToVector(list));
+
+	list2.LinkFront(e3);
+	h.Commit();
+	EXPECT_EQ(Elements({&e3}), ToVector(list2));
+
+	list.Clear();
+	h.Commit();
+	EXPECT_EQ(Elements{}, ToVector(list));
+
+	h.Undo();
+	EXPECT_EQ(Elements({&e2, &e3, &e1}), ToVector(list));
+	EXPECT_EQ(Elements({&e3}), ToVector(list2));
+
+	h.Redo();
+	EXPECT_EQ(Elements{}, ToVector(list));
+	EXPECT_EQ(Elements({&e3}), ToVector(list2));
+
+	h.Undo();
+	h.Undo();
+	EXPECT_EQ(Elements({&e2, &e3, &e1}), ToVector(list));
+	EXPECT_EQ(Elements{}, ToVector(list2));
 }
