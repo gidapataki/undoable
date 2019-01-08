@@ -30,8 +30,7 @@ public:
 	void Unlink();
 
 protected:
-	class Relink
-		: public Command {
+	class Relink : public Command {
 	public:
 		Relink(ListNodeBase* node, ListNodeBase* next, ListPropertyBase* parent);
 		virtual void Apply(bool reverse) override;
@@ -154,7 +153,8 @@ public:
 	// O(1)
 	void UnlinkFront();
 	void UnlinkBack();
-	void LinkAt(iterator pos, ListNode& u);
+
+	iterator LinkAt(iterator pos, ListNode& u);
 	void LinkFront(ListNode& u);
 	void LinkBack(ListNode& u);
 	bool IsEmpty() const;
@@ -172,13 +172,13 @@ public:
 	const_iterator cend() const;
 
 	iterator Remove(iterator it);
+	iterator Find(ListNode& u);
+	const_iterator Find(const ListNode& u) const;
+	std::size_t Count(const ListNode& u) const;
 
 	// O(n)
 	void Clear();
-	std::size_t Count(const ListNode& u) const;
 	std::size_t Size() const;
-	iterator Find(const ListNode& u);
-	const_iterator Find(const ListNode& u) const;
 
 protected:
 	class ReplaceAll : public Command {

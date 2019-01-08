@@ -12,6 +12,7 @@ enum class EventType {
 	kCreate,
 	kDestroy,
 	kChange,
+	kDestruct,
 };
 
 struct Event {
@@ -36,6 +37,13 @@ Event MakeDestroyEvent(Object* object) {
 	return ev;
 }
 
+Event MakeDestructEvent(Object* object) {
+	Event ev;
+	ev.type = EventType::kDestruct;
+	ev.object = object;
+	return ev;
+}
+
 Event MakeChangeEvent(Property* property) {
 	Event ev;
 	ev.type = EventType::kChange;
@@ -52,6 +60,7 @@ std::ostream& ToStream(std::ostream& stream, const Event& ev) {
 	switch (ev.type) {
 		case EventType::kCreate: sym = '+'; break;
 		case EventType::kDestroy: sym = '-'; break;
+		case EventType::kDestruct: sym = '~'; break;
 		case EventType::kChange: sym = '@'; break;
 	}
 
@@ -60,7 +69,6 @@ std::ostream& ToStream(std::ostream& stream, const Event& ev) {
 }
 
 using Events = std::vector<Event>;
-
 
 
 template<typename T>
@@ -94,12 +102,17 @@ public:
 		: events(evs)
 	{
 		EXPECT_TRUE(IsConstructing());
+		EXPECT_FALSE(change_in_ctor_);
 		value.Set(3);
+		EXPECT_TRUE(change_in_ctor_);
 	}
 
 	~Element() {
 		EXPECT_TRUE(IsDestructing());
+		EXPECT_FALSE(change_in_dtor_);
 		value.Set(-3);
+		EXPECT_TRUE(change_in_dtor_);
+		events.push_back(MakeDestructEvent(this));
 	}
 
 	virtual void OnCreate() override {
@@ -111,16 +124,22 @@ public:
 	}
 
 	virtual void OnPropertyChange(Property* property) override {
-		if (IsConstructing() || IsDestructing()) {
+		if (IsConstructing()) {
+			change_in_ctor_ = true;
+			return;
+		}
+		if (IsDestructing()) {
+			change_in_dtor_ = true;
 			return;
 		}
 		events.push_back(MakeChangeEvent(property));
-		// value.Set(value.Get() + 1);
 	}
 
 	ValueProperty<int> value {this};
 	ListProperty<Element, struct tag_children> children {this};
 	Events& events;
+	bool change_in_ctor_ = false;
+	bool change_in_dtor_ = false;
 };
 
 } // namespace
@@ -136,107 +155,119 @@ TEST(ObjectTest, InheritanceOrder) {
 
 TEST(ObjectTest, CreateDestroy) {
 	Events evs;
-	{
-		Factory f;
+	auto factory = MakeUnique<Factory>();
+	auto& f = *factory;
 
-		auto& e1 = f.Create<Element>(evs);
-		EXPECT_EQ(Events{MakeCreateEvent(&e1)}, evs);
+	auto& e1 = f.Create<Element>(evs);
+	EXPECT_EQ(Events{MakeCreateEvent(&e1)}, evs);
 
-		evs.clear();
-		e1.Destroy();
-		EXPECT_EQ(Events{MakeDestroyEvent(&e1)}, evs);
+	evs.clear();
+	e1.Destroy();
+	EXPECT_EQ(Events{MakeDestroyEvent(&e1)}, evs);
 
-		evs.clear();
-		auto& e2 = f.Create<Element>(evs);
-		EXPECT_EQ(Events{MakeCreateEvent(&e2)}, evs);
+	evs.clear();
+	auto& e2 = f.Create<Element>(evs);
+	EXPECT_EQ(Events{MakeCreateEvent(&e2)}, evs);
 
-		evs.clear();
-		f.GetHistory().Commit();
-	}
-
+	evs.clear();
+	f.GetHistory().Commit();
 	EXPECT_TRUE(evs.empty());
+
+	factory.reset();
+	EXPECT_EQ((Events{
+		MakeDestructEvent(&e1),
+		MakeDestructEvent(&e2)
+	}), evs);
 }
 
 TEST(ObjectTest, Change) {
 	Events evs;
-	{
-		Factory f;
+	auto factory = MakeUnique<Factory>();
+	auto& f = *factory;
 
-		auto& e1 = f.Create<Element>(evs);
-		EXPECT_EQ(Events{MakeCreateEvent(&e1)}, evs);
+	auto& e1 = f.Create<Element>(evs);
+	EXPECT_EQ(Events{MakeCreateEvent(&e1)}, evs);
 
-		evs.clear();
-		e1.value.Set(12);
-		EXPECT_EQ(Events{MakeChangeEvent(&e1.value)}, evs);
+	evs.clear();
+	e1.value.Set(12);
+	EXPECT_EQ(Events{MakeChangeEvent(&e1.value)}, evs);
 
-		evs.clear();
-		auto& e2 = f.Create<Element>(evs);
-		e1.children.LinkBack(e2);
-		EXPECT_EQ((Events{
-			MakeCreateEvent(&e2),
-			MakeChangeEvent(&e1.children)
-		}), evs);
+	evs.clear();
+	auto& e2 = f.Create<Element>(evs);
+	e1.children.LinkBack(e2);
+	EXPECT_EQ((Events{
+		MakeCreateEvent(&e2),
+		MakeChangeEvent(&e1.children)
+	}), evs);
 
-		evs.clear();
-		f.GetHistory().Commit();
-	}
+	evs.clear();
+	f.GetHistory().Commit();
 	EXPECT_TRUE(evs.empty());
+
+	factory.reset();
+	EXPECT_EQ((Events{
+		MakeDestructEvent(&e1),
+		MakeDestructEvent(&e2)
+	}), evs);
 }
 
 TEST(ObjectTest, UndoRedo) {
 	Events evs;
-	{
-		Factory f;
-		auto& h = f.GetHistory();
+	auto factory = MakeUnique<Factory>();
+	auto& f = *factory;
+	auto& h = f.GetHistory();
 
-		auto& e1 = f.Create<Element>(evs);
-		auto& e2 = f.Create<Element>(evs);
-		EXPECT_EQ(2, evs.size());
+	auto& e1 = f.Create<Element>(evs);
+	auto& e2 = f.Create<Element>(evs);
+	EXPECT_EQ(2, evs.size());
 
-		e1.Destroy();
-		e2.Destroy();
+	e1.Destroy();
+	e2.Destroy();
 
-		EXPECT_EQ((Events{
-			MakeCreateEvent(&e1),
-			MakeCreateEvent(&e2),
-			MakeDestroyEvent(&e1),
-			MakeDestroyEvent(&e2),
-		}), evs);
+	EXPECT_EQ((Events{
+		MakeCreateEvent(&e1),
+		MakeCreateEvent(&e2),
+		MakeDestroyEvent(&e1),
+		MakeDestroyEvent(&e2),
+	}), evs);
 
-		evs.clear();
+	evs.clear();
 
-		EXPECT_TRUE(h.CanCommit());
-		h.Commit();
-
-		EXPECT_TRUE(evs.empty());
-		EXPECT_TRUE(h.CanUndo());
-		h.Undo();
-
-		EXPECT_EQ((Events{
-			MakeCreateEvent(&e2),
-			MakeCreateEvent(&e1),
-			MakeDestroyEvent(&e2),
-			MakeDestroyEvent(&e1),
-		}), evs);
-
-		EXPECT_FALSE(h.CanCommit());
-		EXPECT_FALSE(h.CanUndo());
-		EXPECT_TRUE(h.CanRedo());
-
-		evs.clear();
-		h.Redo();
-
-		EXPECT_EQ((Events{
-			MakeCreateEvent(&e1),
-			MakeCreateEvent(&e2),
-			MakeDestroyEvent(&e1),
-			MakeDestroyEvent(&e2),
-		}), evs);
-
-		evs.clear();
-	}
+	EXPECT_TRUE(h.CanCommit());
+	h.Commit();
 
 	EXPECT_TRUE(evs.empty());
+	EXPECT_TRUE(h.CanUndo());
+	h.Undo();
+
+	EXPECT_EQ((Events{
+		MakeCreateEvent(&e2),
+		MakeCreateEvent(&e1),
+		MakeDestroyEvent(&e2),
+		MakeDestroyEvent(&e1),
+	}), evs);
+
+	EXPECT_FALSE(h.CanCommit());
+	EXPECT_FALSE(h.CanUndo());
+	EXPECT_TRUE(h.CanRedo());
+
+	evs.clear();
+	h.Redo();
+
+	EXPECT_EQ((Events{
+		MakeCreateEvent(&e1),
+		MakeCreateEvent(&e2),
+		MakeDestroyEvent(&e1),
+		MakeDestroyEvent(&e2),
+	}), evs);
+
+	evs.clear();
+
+	factory.reset();
+	EXPECT_EQ((Events{
+		MakeDestructEvent(&e1),
+		MakeDestructEvent(&e2)
+	}), evs);
 }
 
 TEST(ObjectTest, DestroyMembers) {
@@ -274,4 +305,49 @@ TEST(ObjectTest, StatusCheck) {
 	e1.Destroy();
 	EXPECT_FALSE(e1.IsCreated());
 	EXPECT_TRUE(e1.IsDestroyed());
+}
+
+TEST(ObjectTest, DestructInaccessible) {
+	Events evs;
+	Factory f;
+	auto& h = f.GetHistory();
+	auto& e1 = f.Create<Element>(evs);
+
+	EXPECT_EQ((Events{MakeCreateEvent(&e1)}), evs);
+
+	evs.clear();
+	h.Commit();
+	EXPECT_TRUE(evs.empty());
+
+	auto& e2 = f.Create<Element>(evs);
+	h.Unstage();
+	EXPECT_EQ((Events{
+		MakeCreateEvent(&e2),
+		MakeDestroyEvent(&e2),
+		MakeDestructEvent(&e2),
+	}), evs);
+
+	evs.clear();
+	auto& e3 = f.Create<Element>(evs);
+	h.Commit();
+	h.Clear();
+	EXPECT_EQ((Events{
+		MakeCreateEvent(&e3),
+	}), evs);
+
+	evs.clear();
+	e1.Destroy();
+	e3.Destroy();
+	h.Commit();
+	EXPECT_EQ((Events{
+		MakeDestroyEvent(&e1),
+		MakeDestroyEvent(&e3),
+	}), evs);
+
+	evs.clear();
+	h.Clear();
+	EXPECT_EQ((Events{
+		MakeDestructEvent(&e1),
+		MakeDestructEvent(&e3),
+	}), evs);
 }

@@ -147,13 +147,17 @@ void ListProperty<Type, Tag>::UnlinkBack() {
 }
 
 template<typename Type, typename Tag>
-void ListProperty<Type, Tag>::LinkAt(iterator pos, ListNode& u) {
+typename ListProperty<Type, Tag>::iterator ListProperty<Type, Tag>::LinkAt(
+	iterator pos, ListNode& u)
+{
 	assert((pos.node_ == &Head() || pos.node_->parent_ == this) &&
 		"Invalid iterator");
 	if (pos.node_ != &u) {
 		auto cmd = MakeUnique<typename ListNode::Relink>(&u, pos.node_, this);
 		owner_->ApplyPropertyChange(std::move(cmd));
+		pos.node_ = &u;
 	}
+	return pos;
 }
 
 template<typename Type, typename Tag>
@@ -252,24 +256,20 @@ std::size_t ListProperty<Type, Tag>::Count(const ListNode& u) const {
 }
 
 template<typename Type, typename Tag>
-typename ListProperty<Type, Tag>::iterator ListProperty<Type, Tag>::Find(const ListNode& u) {
-	// TODO: this could be 0(1)
-	for (auto it = begin(), it_end = end(); it != it_end; ++it) {
-		if (&*it == &u) {
-			return it;
-		}
+typename ListProperty<Type, Tag>::iterator ListProperty<Type, Tag>::Find(ListNode& u) {
+	if (u.parent_ == this) {
+		return iterator(&u);
 	}
+
 	return end();
 }
 
 template<typename Type, typename Tag>
 typename ListProperty<Type, Tag>::const_iterator ListProperty<Type, Tag>::Find(const ListNode& u) const {
-	// TODO: this could be 0(1)
-	for (auto it = begin(), it_end = end(); it != it_end; ++it) {
-		if (&*it == &u) {
-			return it;
-		}
+	if (u.parent_ == this) {
+		return const_iterator(&u);
 	}
+
 	return end();
 }
 

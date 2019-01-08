@@ -341,7 +341,7 @@ TEST(ListPropertyTest, Insertion) {
 	auto& e4 = f.Create<Element>();
 	auto& list = c.ls0;
 
-	XList::iterator it;
+	XList::iterator it, it2;
 
 	list.LinkBack(e1);
 	list.LinkBack(e2);
@@ -349,26 +349,31 @@ TEST(ListPropertyTest, Insertion) {
 	EXPECT_EQ(Vector({ &e1, &e2, &e3 }), ToVector(list));
 
 	it = list.begin();
-	list.LinkAt(it, e4);
+	it2 = list.LinkAt(it, e4);
 	EXPECT_EQ(Vector({ &e4, &e1, &e2, &e3 }), ToVector(list));
+	EXPECT_EQ(&e4, &*it2);
 
 	it = list.begin();
 	EXPECT_EQ(&e4, &*it);
 
-	list.LinkAt(it, e4);
+	it2 = list.LinkAt(it, e4);
 	EXPECT_EQ(Vector({ &e4, &e1, &e2, &e3 }), ToVector(list));
+	EXPECT_EQ(&e4, &*it2);
 
 	++it;
 	EXPECT_EQ(&e1, &*it);
+	EXPECT_EQ(&e4, &*it2);
 
-	list.LinkAt(it, e4);
+	it2 = list.LinkAt(it, e4);
 	EXPECT_EQ(Vector({ &e4, &e1, &e2, &e3 }), ToVector(list));
+	EXPECT_EQ(&e4, &*it2);
 
 	++it;
 	EXPECT_EQ(&e2, &*it);
 
-	list.LinkAt(it, e4);
+	it2 = list.LinkAt(it, e4);
 	EXPECT_EQ(Vector({ &e1, &e4, &e2, &e3 }), ToVector(list));
+	EXPECT_EQ(&e4, &*it2);
 
 	++it;
 	EXPECT_EQ(&e3, &*it);
@@ -379,8 +384,9 @@ TEST(ListPropertyTest, Insertion) {
 	++it;
 	EXPECT_EQ(list.end(), it);
 
-	list.LinkAt(it, e4);
-	EXPECT_EQ(Vector({ &e1, &e2, &e3, &e4 }), ToVector(list));
+	it2 = list.LinkAt(it, e2);
+	EXPECT_EQ(Vector({ &e1, &e4, &e3, &e2 }), ToVector(list));
+	EXPECT_EQ(&e2, &*it2);
 }
 
 TEST(ListPropertyTest, Find) {
@@ -437,4 +443,9 @@ TEST(ListPropertyTest, Destroy) {
 
 	e2.Destroy();
 	EXPECT_EQ(Vector({&e1}), ToVector(list));
+}
+
+
+TEST(ListPropertyTest, UndoRedo) {
+	// fixme -
 }

@@ -98,6 +98,19 @@ TEST(HistoryTest, UndoRedo) {
 	EXPECT_FALSE(h.CanCommit());
 	EXPECT_TRUE(h.CanUndo());
 	EXPECT_FALSE(h.CanRedo());
+
+	ev.clear();
+	h.Redo();
+	EXPECT_TRUE(ev.empty());
+	EXPECT_FALSE(h.CanCommit());
+	EXPECT_TRUE(h.CanUndo());
+	EXPECT_FALSE(h.CanRedo());
+
+	h.Commit();
+	EXPECT_TRUE(ev.empty());
+	EXPECT_FALSE(h.CanCommit());
+	EXPECT_TRUE(h.CanUndo());
+	EXPECT_FALSE(h.CanRedo());
 }
 
 
