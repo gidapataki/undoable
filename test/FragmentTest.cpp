@@ -65,14 +65,15 @@ TEST(FragmentTest, Propagation) {
 	EXPECT_EQ(1, e1.a.value.Get());
 	EXPECT_EQ(2, e1.b.value.Get());
 	EXPECT_EQ(3, e1.c.value.Get());
-	EXPECT_EQ((void*) nullptr, e1.last_changed);
 
+	e1.b.value.Set(3);
 	e1.c.children.LinkBack(e2);
 	h.Commit();
 
 	EXPECT_EQ(&e1.c, e1.last_changed);
 	EXPECT_TRUE(e1.IsCreated());
 	EXPECT_TRUE(e2.IsCreated());
+	EXPECT_EQ(1, e1.c.children.Size());
 
 	e1.a.value.Set(5);
 	EXPECT_EQ(&e1.a, e1.last_changed);
@@ -81,9 +82,11 @@ TEST(FragmentTest, Propagation) {
 	h.Commit();
 	EXPECT_TRUE(e1.IsDestroyed());
 	EXPECT_TRUE(e2.IsDestroyed());
+	EXPECT_EQ(0, e1.c.children.Size());
 
 	h.Undo();
 	EXPECT_TRUE(e1.IsCreated());
 	EXPECT_TRUE(e2.IsCreated());
-	EXPECT_EQ(1, e2.c.children.Size());
+	EXPECT_EQ(1, e1.c.children.Size());
+	EXPECT_EQ(&e1.a, e1.last_changed);
 }
