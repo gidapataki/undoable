@@ -76,6 +76,7 @@ TEST(FragmentTest, Propagation) {
 	EXPECT_EQ(1, e1.c.children.Size());
 
 	e1.a.value.Set(5);
+	EXPECT_EQ(5, e1.a.value.Get());
 	EXPECT_EQ(&e1.a, e1.last_changed);
 
 	e1.Destroy();
@@ -88,5 +89,6 @@ TEST(FragmentTest, Propagation) {
 	EXPECT_TRUE(e1.IsCreated());
 	EXPECT_TRUE(e2.IsCreated());
 	EXPECT_EQ(1, e1.c.children.Size());
+	EXPECT_EQ(1, e1.a.value.Get());
 	EXPECT_EQ(&e1.a, e1.last_changed);
 }
