@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <functional>
+#include <set>
 
 
 #ifdef TEST
@@ -24,14 +25,32 @@ public:
 	void RunAll() {
 		for (auto& t : tests_) {
 			std::cerr << "Running " << t.first << " ..." << std::endl;
+			current_ = t.first;
 			t.second();
+			current_.clear();
+		}
+
+		auto success = tests_.size() - errors_.size();
+		auto total = tests_.size();
+
+		std::cerr << "--" << std::endl;
+		std::cerr << "[" << success << "/" << total<< "]";
+		std::cerr << " " << (success == total ?  "Success" : "Failed");
+		std::cerr << std::endl;
+	}
+
+	void AddError() {
+		if (!current_.empty()) {
+			errors_.insert(current_);
 		}
 	}
 
 private:
 	TestRunner() = default;
 
+	std::string current_;
 	std::vector<std::pair<std::string, TestFunc>> tests_;
+	std::set<std::string> errors_;
 };
 
 
@@ -51,9 +70,8 @@ public:
 
 
 #define EXPECT_EQ(u, v) expect_eq(__LINE__, u, v)
-#define EXPECT_NE(u, v) expect_ne(__LINE__, u, v)
-#define EXPECT_TRUE(v) expect_eq(__LINE__, true, v)
-#define EXPECT_FALSE(v) expect_eq(__LINE__, false, v)
+#define EXPECT_TRUE(v) expect_eq(__LINE__, true, (bool) v)
+#define EXPECT_FALSE(v) expect_eq(__LINE__, false, (bool) v)
 
 
 template<typename T>
@@ -79,6 +97,7 @@ void ToStream(std::ostream& stream, const std::vector<T>& container) {
 template<typename U, typename V>
 void expect_eq(int line, const U& expected, const V& actual) {
 	if (!(expected == actual)) {
+		TestRunner::Get().AddError();
 		std::cerr << "Error in line " << line << std::endl;
 		std::cerr << "  expected: ";
 		ToStream(std::cerr, expected);
@@ -88,13 +107,3 @@ void expect_eq(int line, const U& expected, const V& actual) {
 		std::cerr << std::endl;
 	}
 }
-
-template<typename U, typename V>
-void expect_ne(int line, const U& expected, const V& actual) {
-	if (!(expected != actual)) {
-		std::cerr << "Error in line " << line << std::endl;
-		std::cerr << "  expected: " << expected << std::endl;
-		std::cerr << "    actual: " << actual << std::endl;
-	}
-}
-

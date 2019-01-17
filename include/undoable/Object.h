@@ -3,6 +3,7 @@
 #include "undoable/History.h"
 #include "undoable/Property.h"
 #include "undoable/ListProperty.h"
+#include "undoable/RefProperty.h"
 
 
 namespace undoable {
@@ -31,6 +32,7 @@ class Object
 	: public ObjectBase
 	, public PropertyOwner
 	, public ListNodeOwner
+	, public Referable
 {
 public:
 	Object() = default;
